@@ -71,9 +71,72 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 
+################################################################
+#	Splitting the train dataset into train2 and test2
+#
+#
+#
+#################################################################
 
 
 
+
+#edit The percentage of the dataset in the train2 and test2, used to build a model 
+size_of_train = floor(.5*nrow(train))
+ran_num_test = 1:nrow(train)
+
+#gets random numbers for train2 using a sample
+ran_num_train = sample(1:nrow(train), size_of_train)
+
+#numbers not randomly selected for train2 are included in test2
+#this command gets the numbers not in ran_num_train
+ran_num_test = ran_num_test[(!(ran_num_test %in% ran_num_train)) == TRUE]
+train2 = train[ran_num_train,]
+test2 = train[ran_num_test,]
+
+
+
+
+
+
+
+###########################################################################################
+#	NaiveBayes algorithm implementation
+#
+#
+#
+#
+#
+#
+#
+############################################################################################
+
+
+NBmod = naiveBayes(country_destination~. -id -date_account_created, data = train2)
+summary(NBmod)
+NB.pred = predict(NBmod, newdata = test2, type = "raw")
+NB.pred = as.data.frame(NB.pred)
+str(as.data.frame(sort(NB.pred[1,], decreasing=TRUE)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+########################################################################################
+#
+#	testing to make sure function works
+#
+#
+#
+#########################################################################################
 
 
 data_frame = as.data.frame(matrix(nrow=10, ncol = 2))
