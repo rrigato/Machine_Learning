@@ -111,21 +111,37 @@ test2 = train[ran_num_test,]
 #
 ############################################################################################
 
-
+#naive bayes
 NBmod = naiveBayes(country_destination~. -id -date_account_created, data = train2)
 summary(NBmod)
+#predict the probability of each country 
+#based on Naive Bayes from train2 for test2
 NB.pred = predict(NBmod, newdata = test2, type = "raw")
-NB.pred = as.data.frame(NB.pred)
-str(as.data.frame(sort(NB.pred[1,], decreasing=TRUE)))
+
+#initializing the output dataframe
+outputFrame = as.data.frame(matrix(nrow=nrow(test2), ncol = 6))
+
+outputFrame = rename(outputFrame, c("V1" = "id", "V2" = "country1",
+				"V3" = "country2", "V4" = "country3",
+				"V5" = "country4", "V6" = "country5"))
+
+outputFrame[,1] = test2[,1]
 
 
+for(i in 1:nrow(test2))
+{
+outputFrame[i,2:6] = rownames(as.data.frame(sort(NB.pred[i,], decreasing=TRUE)))[1:5]
+}
+head(outputFrame)
 
 
+#falidating output for outputFrame
+sum(is.na(outputFrame))
+nrow(outputFrame) == nrow(test2)
+nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 6
 
 
-
-
-
+system.time(NDCG(outputFrame))
 
 
 
@@ -139,21 +155,17 @@ str(as.data.frame(sort(NB.pred[1,], decreasing=TRUE)))
 #########################################################################################
 
 
-data_frame = as.data.frame(matrix(nrow=10, ncol = 2))
-data_frame = rename(data_frame, c("V1" = "id", "V2" = "country")) 
-data_frame[1:5,1] = 'gxn3p5htnn'
-data_frame[1:5,2] = 'NDF'
-data_frame[6:10,1] = 'jh95kwisub'
-data_frame[6:10,2] = 'NDF'
+data_frame = as.data.frame(matrix(nrow=2, ncol = 6))
+data_frame = rename(data_frame, c("V1" = "id", "V2" = "country1",
+				"V3" = "country2", "V4" = "country3",
+				"V5" = "country4", "V6" = "country5"))
+data_frame[1,1] = 'gxn3p5htnn'
+data_frame[1,2:6] = 'NDF'
+data_frame[2,1] = 'jh95kwisub'
+data_frame[2,2:6] = 'NDF'
 
 
-data_frame2 = as.data.frame(matrix(nrow=nrow(train), ncol = 2))
-data_frame2 = rename(data_frame2, c("V1" = "id", "V2" = "country")) 
-data_frame2[,1] = train$id
-sum(!is.na(data_frame2[,1]))
-data_frame2[,2] = 'NDF'
-
-NDCG(data_frame)
+system.time(NDCG(data_frame))
 ###################################################################################
 #	Normalized Discounted Cumulative Gain
 #
@@ -161,8 +173,8 @@ NDCG(data_frame)
 #	fourth = .43, fifth = .386
 #
 #
-#	#the data_frame that is provided must have 5 predicitions of id, country in
-#	order of importance
+#	#the data_frame must have id in the first column, country_1 in second column,
+#	... country_5 in the sixth column
 #
 #
 #
@@ -171,15 +183,12 @@ NDCG <- function(data_frame){
 	
 	#Cumulative Gain total
 	total = 0
-
-	#counter for how many rows
-	i = 1
 	
-	#this is going to hold the country destination predictions from most to least likely
-	temp = numeric(5)
+
+
 
 	#outer while should iterate nrow(data_frame) /5 times
-	while (i < nrow(data_frame) )
+	for (i in 1:nrow(data_frame) )
 	{
 
 		#going to be the row in train where the correct destination is
@@ -191,7 +200,7 @@ NDCG <- function(data_frame){
 
 
 		#input validation on what values row_num can be
-		if ((row_num < 1) || row_num > nrow(train) )
+		if (row_num < 1  )
 		{
 			print("Error: unable to find row number of correct solution")
 			print("row_num:");
@@ -200,27 +209,35 @@ NDCG <- function(data_frame){
 		}
 
 
-		#setting temp as the five predicted countries.		
-		temp = data_frame[i:(i+4),2]
 		
 		score = 0
+		z = 2
 		#determining which position the score is, should be one to five
-		score = (which(temp == train$country_destination[row_num]) [1])		
-		
+		while(z < 7)
+		{
+			#if the of the predicted data_frame is equal to the actual country 
+			#then that position minus 1 is used for the score 
+			#in the continued loss function 
+			if(data_frame[i,z] == train$country_destination[row_num])
+			{
+				score = z -1
+				z = 7
+			}	
+			z = z + 1 	
+		}
+
 		#if score is zero you will end up dividing by zero so you only want to divide if 
 		#score is not zero
-		if (score >0)
-		{
+		if (score >0){
 			total = total + 1/log2(1+score)
 		}
-		#increment i by 5 since there are 5 predictions
-		i = i + 5
-	
+
+			
 	}
 
 
 
-	total = total / (nrow(data_frame) / 5)
+	total = total / nrow(data_frame) 
 	print("The normalized Discounted Cumulative Gain is:");
 	print(total);
 	return(total);
