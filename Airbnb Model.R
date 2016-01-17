@@ -82,7 +82,7 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 #edit The percentage of the dataset in the train2 and test2, used to build a model 
-size_of_train = floor(.5*nrow(train))
+size_of_train = floor(.8*nrow(train))
 ran_num_test = 1:nrow(train)
 
 #gets random numbers for train2 using a sample
@@ -102,7 +102,7 @@ test2 = train[ran_num_test,]
 
 ###########################################################################################
 #	NaiveBayes algorithm implementation
-#
+#	3426.36 seconds, .8299452 NDCG, 90% train, 10% test
 #
 #
 #
