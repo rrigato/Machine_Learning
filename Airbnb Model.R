@@ -82,7 +82,7 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 #edit The percentage of the dataset in the train2 and test2, used to build a model 
-size_of_train = floor(.8*nrow(train))
+size_of_train = floor(.9*nrow(train))
 ran_num_test = 1:nrow(train)
 
 #gets random numbers for train2 using a sample
@@ -159,10 +159,11 @@ data_frame = as.data.frame(matrix(nrow=2, ncol = 6))
 data_frame = rename(data_frame, c("V1" = "id", "V2" = "country1",
 				"V3" = "country2", "V4" = "country3",
 				"V5" = "country4", "V6" = "country5"))
-data_frame[1,1] = 'gxn3p5htnn'
-data_frame[1,2:6] = 'NDF'
-data_frame[2,1] = 'jh95kwisub'
-data_frame[2,2:6] = 'NDF'
+data_frame[1,1] = '2cji4lpjr3'
+data_frame[1,2:6] = 'NA'
+data_frame[1,2] = 'NDF'
+data_frame[2,1] = 'jtm5s5dhwx'
+data_frame[2,2] = 'NDF'
 
 
 system.time(NDCG(data_frame))
@@ -196,39 +197,28 @@ NDCG <- function(data_frame){
 
 		#gets the row_num from train that matches the id corresponding
 		#to the predictions in temp
-		row_num = (which(train[,1] == data_frame[i,1])[1] )
+		row_num = (which(test2[,1] == data_frame[i,1])[1] )
 
 
 		#input validation on what values row_num can be
-		if (row_num < 1  )
-		{
-			print("Error: unable to find row number of correct solution")
-			print("row_num:");
-			print(row_num);
-			return();
-		}
+#		if (row_num < 1  )
+#		{
+#			print("Error: unable to find row number of correct solution")
+#			print("row_num:");
+#			print(row_num);
+#			return();
+#		}
 
 
 		
 		score = 0
-		z = 2
-		#determining which position the score is, should be one to five
-		while(z < 7)
-		{
-			#if the of the predicted data_frame is equal to the actual country 
-			#then that position minus 1 is used for the score 
-			#in the continued loss function 
-			if(data_frame[i,z] == train$country_destination[row_num])
-			{
-				score = z -1
-				z = 7
-			}	
-			z = z + 1 	
-		}
 
+		#determining which position the score is, should be one to five
+		score =  which(data_frame[i,] == as.character(test2$country_destination[row_num]))[1]
+		score = score - 1
 		#if score is zero you will end up dividing by zero so you only want to divide if 
 		#score is not zero
-		if (score >0){
+		if (!is.na(score)){
 			total = total + 1/log2(1+score)
 		}
 
@@ -255,13 +245,13 @@ NDCG <- function(data_frame){
 
 
 
+train[row_num,16]
 
+train$country_destination[row_num]
+correct = train[,row_num] [1]
+train[row_num,16]
 
-
-
-
-
-
+head(train)
 
 
 
