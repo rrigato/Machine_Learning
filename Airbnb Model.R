@@ -143,6 +143,52 @@ nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 6
 
 system.time(NDCG(outputFrame))
 
+#####################################################################################
+#GBM model
+#
+#
+#
+#
+#
+#
+#
+#
+#######################################################################################
+
+bTree = gbm(country_destination ~. -id -date_account_created -date_first_booking,	distribution = "multinomial", 
+		n.trees = 300, shrinkage = .1, interaction.depth =2,  data = train2)
+bTreeP = predict(bTree, newdata=test2, n.trees = 5000, type="response")
+bTreeP = as.data.frame(bTreeP[,1:12,1])
+head(bTreeP)
+
+
+
+#initializing the output dataframe
+outputFrame2 = as.data.frame(matrix(nrow=nrow(test2), ncol = 6))
+
+outputFrame2 = rename(outputFrame2, c("V1" = "id", "V2" = "country1",
+				"V3" = "country2", "V4" = "country3",
+				"V5" = "country4", "V6" = "country5"))
+
+outputFrame2[,1] = test2[,1]
+
+
+for(i in 1:nrow(test2))
+{
+outputFrame2[i,2:6] = colnames(as.data.frame(sort(bTreeP[i,], decreasing=TRUE)))[1:5]
+}
+head(outputFrame2)
+
+
+#falidating output for outputFrame2
+sum(is.na(outputFrame2))
+nrow(outputFrame2) == nrow(test2)
+nrow(outputFrame2) * ncol(outputFrame2) == nrow(test2) * 6
+
+
+system.time(NDCG(outputFrame2))
+
+
 
 
 
