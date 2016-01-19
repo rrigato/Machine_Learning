@@ -82,7 +82,7 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 #edit The percentage of the dataset in the train2 and test2, used to build a model 
-size_of_train = floor(.9*nrow(train))
+size_of_train = floor(.6*nrow(train))
 ran_num_test = 1:nrow(train)
 
 #gets random numbers for train2 using a sample
@@ -146,18 +146,22 @@ system.time(NDCG(outputFrame))
 #####################################################################################
 #GBM model
 #
-#
-#
-#
+#300 trees interaction 4 shrinkage = .1 .823
+#n.trees = 1000, shrinkage = .01, interaction.depth =3,
+#n.trees = 500, shrinkage = .01, interaction.depth =6, .817 NDCG
 #
 #
 #
 #
 #######################################################################################
 
-bTree = gbm(country_destination ~. -id -date_account_created -date_first_booking,	distribution = "multinomial", 
-		n.trees = 300, shrinkage = .1, interaction.depth =2,  data = train2)
-bTreeP = predict(bTree, newdata=test2, n.trees = 5000, type="response")
+bTree = gbm(country_destination ~ gender + age + signup_method
+		+ signup_flow + language + affiliate_channel + 
+		affiliate_provider + first_affiliate_tracked + signup_app
+		+ first_device_type + first_browser ,	distribution = "multinomial", 
+		n.trees = 500, shrinkage = .01, interaction.depth =6,  data = train2)
+bTreeP = predict(bTree, newdata=test2, n.trees = 1000, type="response")
+ head(as.data.frame(bTreeP[,1:12,1]))
 bTreeP = as.data.frame(bTreeP[,1:12,1])
 head(bTreeP)
 
