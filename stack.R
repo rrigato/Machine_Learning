@@ -102,12 +102,31 @@ cgfit = custom.fit(net, dist = list(A = cptA, B = distB, C = distC))
 
 
 #####################################################################################
-#
+#	multi level classification using svm
 #
 #
 #
 #
 #####################################################################################
+
+library( 'e1071' )
+data( iris )
+model <- svm( iris$Species~., iris )
+res <- predict( model, newdata=iris )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
