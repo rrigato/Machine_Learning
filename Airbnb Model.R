@@ -12,6 +12,7 @@
 #
 ###################################################################################
 
+library(foreign)
 #for examining classification and regression trees
 library(caret)
 
@@ -114,8 +115,7 @@ test2 = train[ran_num_test,]
 ############################################################################################
 
 #naive bayes
-NBmod = naiveBayes(country_destination~ date_account_created + date_first_booking
-		+ timestamp_first_active   , data = train2)
+NBmod = naiveBayes(country_destination~ -id   , data = train2)
 summary(NBmod)
 #predict the probability of each country 
 #based on Naive Bayes from train2 for test2
@@ -197,13 +197,32 @@ system.time(NDCG(outputFrame2))
 
 
 
+
+
+
+
+
+
+
+
+
 ################################################################################
 #
 #	Ensemble method: simple average of Naive Bayes and GBM
 #
-#
-#
-#
+#	n.trees = 300, shrinkage = .1, interaction.depth =2 (GBM) 
+#	NDCG = .8243965 +	 
+##country_destination~ date_account_created + date_first_booking
+#		+ timestamp_first_active  .7910587 NDCG, 90% train, 10% test
+#	using simple average of the probabilities output from those two models
+#	Average NDCG = 0.8196075
+
+#	n.trees = 300, shrinkage = .1, interaction.depth =2 (GBM) 
+#	NDCG = .8243965 +	 
+##country_destination~ date_account_created + date_first_booking
+#		+ timestamp_first_active  . NDCG, 90% train, 10% test
+#	using simple average of the probabilities output from those two models
+#	Average NDCG = .8131319
 #
 ################################################################################
  
@@ -211,7 +230,7 @@ system.time(NDCG(outputFrame2))
 str(as.data.frame(abs(bTreeP - NB.frame)))
 
 #gives the differences of the two methods greater than an arbitrary probability
-sum(as.data.frame(abs(bTreeP - NB.frame)) > .5) 
+sum(as.data.frame(abs(bTreeP - NB.frame)) > .4) 
 
 
 #averaging the predicted probabilities
