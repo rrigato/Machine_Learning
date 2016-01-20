@@ -82,7 +82,7 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 #edit The percentage of the dataset in the train2 and test2, used to build a model 
-size_of_train = floor(.6*nrow(train))
+size_of_train = floor(.9*nrow(train))
 ran_num_test = 1:nrow(train)
 
 #gets random numbers for train2 using a sample
@@ -103,6 +103,8 @@ test2 = train[ran_num_test,]
 ###########################################################################################
 #	NaiveBayes algorithm implementation
 #	3426.36 seconds, .8299452 NDCG, 90% train, 10% test
+#country_destination~ date_account_created + date_first_booking
+#		+ timestamp_first_active  .7910587 NDCG, 90% train, 10% test
 #
 #
 #
@@ -112,7 +114,8 @@ test2 = train[ran_num_test,]
 ############################################################################################
 
 #naive bayes
-NBmod = naiveBayes(country_destination~. -id -date_account_created, data = train2)
+NBmod = naiveBayes(country_destination~ date_account_created + date_first_booking
+		+ timestamp_first_active   , data = train2)
 summary(NBmod)
 #predict the probability of each country 
 #based on Naive Bayes from train2 for test2
@@ -127,7 +130,7 @@ outputFrame = rename(outputFrame, c("V1" = "id", "V2" = "country1",
 
 outputFrame[,1] = test2[,1]
 
-
+NB.frame = as.data.frame(NB.pred)
 for(i in 1:nrow(test2))
 {
 outputFrame[i,2:6] = rownames(as.data.frame(sort(NB.pred[i,], decreasing=TRUE)))[1:5]
@@ -159,7 +162,7 @@ bTree = gbm(country_destination ~ gender + age + signup_method
 		+ signup_flow + language + affiliate_channel + 
 		affiliate_provider + first_affiliate_tracked + signup_app
 		+ first_device_type + first_browser ,	distribution = "multinomial", 
-		n.trees = 500, shrinkage = .01, interaction.depth =6,  data = train2)
+		n.trees = 300, shrinkage = .1, interaction.depth =2,  data = train2)
 bTreeP = predict(bTree, newdata=test2, n.trees = 1000, type="response")
  head(as.data.frame(bTreeP[,1:12,1]))
 bTreeP = as.data.frame(bTreeP[,1:12,1])
@@ -191,6 +194,69 @@ nrow(outputFrame2) * ncol(outputFrame2) == nrow(test2) * 6
 
 
 system.time(NDCG(outputFrame2))
+
+
+
+################################################################################
+#
+#	Ensemble method: simple average of Naive Bayes and GBM
+#
+#
+#
+#
+#
+################################################################################
+ 
+#difference of 12 probabilities from Naive Bayes and GBM
+str(as.data.frame(abs(bTreeP - NB.frame)))
+
+#gives the differences of the two methods greater than an arbitrary probability
+sum(as.data.frame(abs(bTreeP - NB.frame)) > .5) 
+
+
+#averaging the predicted probabilities
+str(as.data.frame((bTreeP + NB.frame) / 2))
+
+EnsembleFrame = as.data.frame((bTreeP + NB.frame) / 2)
+
+
+
+
+#initializing the output dataframe
+outputFrame3 = as.data.frame(matrix(nrow=nrow(test2), ncol = 6))
+
+outputFrame3 = rename(outputFrame3, c("V1" = "id", "V2" = "country1",
+				"V3" = "country2", "V4" = "country3",
+				"V5" = "country4", "V6" = "country5"))
+
+outputFrame3[,1] = test2[,1]
+
+
+
+#gets the top 5 countries by probability and places them in the outputFrame
+for(i in 1:nrow(test2))
+{
+outputFrame3[i,2:6] = colnames(as.data.frame(sort(EnsembleFrame[i,], decreasing=TRUE)))[1:5]
+}
+head(outputFrame3)
+
+
+
+
+#falidating output for outputFrame3
+sum(is.na(outputFrame3))
+nrow(outputFrame3) == nrow(test2)
+nrow(outputFrame3) * ncol(outputFrame3) == nrow(test2) * 6
+
+
+system.time(NDCG(outputFrame3))
+
+
+
+
+
+
+
 
 
 
