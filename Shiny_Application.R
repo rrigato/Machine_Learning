@@ -10,7 +10,8 @@ fluidPage(
 		sliderInput(inputId = "num", label = "Choose a number",   
 			   value = 12, min = 1, max = 25),
 		#need to put a comma between objects
-		plotOutput(outputId="main_plot")
+		plotOutput(outputId="main_plot"),
+		plotOutput(outputId="line_plot")
 	   )
 
 server <- function (input, output)
@@ -18,6 +19,15 @@ server <- function (input, output)
 	output$main_plot <- renderPlot({
 
     				hist(		iris$Sepal.Length,
+     						 xlab = "Duration (minutes)",
+    				  			main = "Geyser eruption duration"
+					)
+				})
+
+	output$line_plot <- renderPlot({
+
+    				plot(		iris$Petal.Length,
+						iris$Petal.Width,
      						 xlab = "Duration (minutes)",
     				  			main = "Geyser eruption duration"
 					)
