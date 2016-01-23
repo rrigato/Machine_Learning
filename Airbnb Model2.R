@@ -11,6 +11,11 @@
 #
 #
 ###################################################################################
+install.packages("class")
+#used for the knn algorithm
+library(class)
+
+
 
 library(foreign)
 #for examining classification and regression trees
@@ -83,7 +88,7 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 #edit The percentage of the dataset in the train2 and test2, used to build a model 
-size_of_train = floor(.9*nrow(train))
+size_of_train = floor(.75*nrow(train))
 ran_num_test = 1:nrow(train)
 
 #gets random numbers for train2 using a sample
@@ -115,7 +120,7 @@ test2 = train[ran_num_test,]
 ############################################################################################
 
 #naive bayes
-NBmod = naiveBayes(country_destination~ -id   , data = train2)
+NBmod = naiveBayes(country_destination~. -id   , data = train2)
 summary(NBmod)
 #predict the probability of each country 
 #based on Naive Bayes from train2 for test2
@@ -198,32 +203,38 @@ system.time(NDCG(outputFrame2))
 
 
 
+################################################################################
+#	
+#	randomForest
+#
+#
+#
+#################################################################################
+ranOut = randomForest(as.factor(country_destination) ~ gender + signup_method
+		+ signup_flow + language + affiliate_channel + 
+		affiliate_provider  + first_affiliate_tracked + signup_app
+		+ first_device_type + first_browser,  importance = TRUE,
+				ntrees = 500, data=train2)
 
+ranPred = predict(ranOut, newdata = test2,type = 'prob')
 
-
-
-
+ranPred = as.data.frame(ranPred)
 
 
 
 ################################################################################
 #
-#	Ensemble method: simple average of Naive Bayes and GBM
-#
-#	n.trees = 300, shrinkage = .1, interaction.depth =2 (GBM) 
-#	NDCG = .8243965 +	 
-##country_destination~ date_account_created + date_first_booking
-#		+ timestamp_first_active  .7910587 NDCG, 90% train, 10% test
-#	using simple average of the probabilities output from those two models
-#	Average NDCG = 0.8196075
-
+#	Ensemble method: .75 * NB + .25*GBM
+#	country_destination~. -id NDCG = .837  
 #	n.trees = 300, shrinkage = .1, interaction.depth =2 (GBM) 
 #	NDCG = .8243965 +	 
 ##country_destination~ date_account_created + date_first_booking
 #		+ timestamp_first_active  . NDCG, 90% train, 10% test
 #	using simple average of the probabilities output from those two models
-#	Average NDCG = .8131319
+#	Average NDCG = .8458347
 #
+#	Average NDCG = .8472761 for .75 GBM + .25 NB
+#	Average NDCG = .8476111 for .35 GBM + .65 NB
 ################################################################################
  
 #difference of 12 probabilities from Naive Bayes and GBM
@@ -236,7 +247,7 @@ sum(as.data.frame(abs(bTreeP - NB.frame)) > .4)
 #averaging the predicted probabilities
 str(as.data.frame((bTreeP + NB.frame) / 2))
 
-EnsembleFrame = as.data.frame((bTreeP + NB.frame) / 2)
+EnsembleFrame = as.data.frame((.35 * bTreeP + .65 * NB.frame) )
 
 
 
@@ -267,18 +278,25 @@ sum(is.na(outputFrame3))
 nrow(outputFrame3) == nrow(test2)
 nrow(outputFrame3) * ncol(outputFrame3) == nrow(test2) * 6
 
+#gives the observations where none of the 5 predictions counted
+ missed = NDCG(outputFrame3)
+print("Proportion where actual country was not in prediction:")
+print(length(which(missed==0))/nrow(test2))
+summary(test2[which(missed==0),])
 
-system.time(NDCG(outputFrame3))
-
-
-
-
-
-
-
-
+#gives the proportion of gender where the algorithm did not predict 
+table(test2[which(missed==0),5])/ length(which(missed==0))
 
 
+table(test2[,5])/ nrow(test2)
+
+
+
+#gives the proportion of gender where the algorithm did not predict 
+table(test2[which(missed==0),16])/ length(which(missed==0))
+
+
+table(test2[,16])/ nrow(test2)
 
 
 ########################################################################################
@@ -322,7 +340,7 @@ NDCG <- function(data_frame){
 	
 
 
-
+	temp = numeric(nrow(test2))
 	#outer while should iterate nrow(data_frame) /5 times
 	for (i in 1:nrow(data_frame) )
 	{
@@ -338,6 +356,8 @@ NDCG <- function(data_frame){
 		#score is not zero
 		if (!is.na(score)){
 			total = total + 1/log2(1+score)
+			temp[i] = score
+			
 		}
 
 			
@@ -348,7 +368,7 @@ NDCG <- function(data_frame){
 	total = total / nrow(data_frame) 
 	print("The normalized Discounted Cumulative Gain is:");
 	print(total);
-	return(total);
+	return(temp);
 
 
 
