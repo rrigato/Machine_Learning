@@ -73,8 +73,17 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 
+train = merge(train , sessions, by.x='id', by.y = 'user_id')
+test = merge(test , sessions, by.x='id', by.y = 'user_id', all.x = TRUE)
 
 
+#turning dates in training and test sets into numeric values
+
+train[,2] = as.numeric(train[,2])
+train[,4] = as.numeric(train[,4])
+
+test[,2] = as.numeric(test[,2])
+test[,4] = as.numeric(test[,4])
 
 
 ################################################################
@@ -88,7 +97,7 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 #edit The percentage of the dataset in the train2 and test2, used to build a model 
-size_of_train = floor(.75*nrow(train))
+size_of_train = floor(.85*nrow(train))
 ran_num_test = 1:nrow(train)
 
 #gets random numbers for train2 using a sample
@@ -113,14 +122,14 @@ test2 = train[ran_num_test,]
 #		+ timestamp_first_active  .7910587 NDCG, 90% train, 10% test
 #
 #
-#
+#	
 #
 #
 #
 ############################################################################################
 
 #naive bayes
-NBmod = naiveBayes(country_destination~. -id   , data = train2)
+NBmod = naiveBayes(country_destination~. -id -date_account_created , data = train2)
 summary(NBmod)
 #predict the probability of each country 
 #based on Naive Bayes from train2 for test2
@@ -135,10 +144,40 @@ outputFrame = rename(outputFrame, c("V1" = "id", "V2" = "country1",
 
 outputFrame[,1] = test2[,1]
 
+
 NB.frame = as.data.frame(NB.pred)
-for(i in 1:nrow(test2))
+
+
+
+
+NB.frame[,13] = test2[,1]
+NB.frame = rename(NB.frame, c('V13' = 'id'))
+
+#average probabilities by id
+NB.frame[,1] = ave(NB.frame$AU, NB.frame$id, FUN=mean)
+NB.frame[,2] = ave(NB.frame$CA,NB.frame$id, FUN=mean)
+NB.frame[,3] = ave(NB.frame$DE, NB.frame$id, FUN=mean)
+NB.frame[,4] = ave(NB.frame$ES,NB.frame$id, FUN=mean)
+NB.frame[,5] = ave(NB.frame$FR, NB.frame$id, FUN=mean)
+NB.frame[,6] = ave(NB.frame$GB,NB.frame$id, FUN=mean)
+NB.frame[,7] = ave(NB.frame$IT, NB.frame$id, FUN=mean)
+NB.frame[,8] = ave(NB.frame$NDF,NB.frame$id, FUN=mean)
+NB.frame[,9] = ave(NB.frame$NL, NB.frame$id, FUN=mean)
+NB.frame[,10] = ave(NB.frame$other,NB.frame$id, FUN=mean)
+NB.frame[,11] = ave(NB.frame$PT,NB.frame$id, FUN=mean)
+NB.frame[,12] = ave(NB.frame$US, NB.frame$id, FUN=mean)
+
+
+#remove duplicate ids
+NB.frame2 = NB.frame[!duplicated(NB.frame$id),]
+
+#initialize test3 for NDCG
+test3 = test2[!duplicated(test2$id),]
+
+
+for(i in 1:nrow(test3))
 {
-outputFrame[i,2:6] = rownames(as.data.frame(sort(NB.pred[i,], decreasing=TRUE)))[1:5]
+outputFrame[i,2:6] = colnames(sort(NB.frame2[i,], decreasing=TRUE))[1:5]
 }
 head(outputFrame)
 
@@ -208,14 +247,17 @@ system.time(NDCG(outputFrame2))
 #	randomForest
 #
 #	NDCG: .8074963
-#
+#	date_account_created and date_first_booking must be numeric 
+#	with those two as numeric NDCG: .9236131!!!
+#	problem: date_first_booking has no observations in test
+#	.8118565 with no date_first_booking
 #################################################################################
 ranOut = randomForest(as.factor(country_destination) ~ gender + signup_method
 		+ signup_flow + language + affiliate_channel + 
 		affiliate_provider  + first_affiliate_tracked + signup_app
 		+ first_device_type + first_browser + date_account_created 
-		+ date_first_booking,  importance = TRUE,
-				ntrees = 500, data=train2)
+		+ timestamp_first_active,  importance = TRUE,
+				ntrees = 300, data=train2)
 
 ranPred = predict(ranOut, newdata = test2,type = 'prob')
 
@@ -234,7 +276,7 @@ outputFrame4[,1] = test2[,1]
 
 for(i in 1:nrow(test2))
 {
-outputFrame4[i,2:6] = rownames(as.data.frame(sort(ranPred[i,], decreasing=TRUE)))[1:5]
+outputFrame4[i,2:6] = colnames(as.data.frame(sort(ranPred[i,], decreasing=TRUE)))[1:5]
 }
 head(outputFrame4)
 
@@ -246,7 +288,7 @@ nrow(outputFrame4) * ncol(outputFrame4) == nrow(test2) * 6
 
 
 system.time(NDCG(outputFrame4))
-
+varImpPlot(ranOut)
 
 
 
@@ -368,7 +410,7 @@ NDCG <- function(data_frame){
 	
 
 
-	temp = numeric(nrow(test2))
+	temp = numeric(nrow(test3))
 	#outer while should iterate nrow(data_frame) /5 times
 	for (i in 1:nrow(data_frame) )
 	{
@@ -378,7 +420,7 @@ NDCG <- function(data_frame){
 		score = 0
 
 		#determining which position the score is, should be one to five
-		score =  which(data_frame[i,] == as.character(test2$country_destination[i]))[1]
+		score =  which(data_frame[i,] == as.character(test3$country_destination[i]))[1]
 		score = score - 1
 		#if score is zero you will end up dividing by zero so you only want to divide if 
 		#score is not zero
