@@ -207,18 +207,46 @@ system.time(NDCG(outputFrame2))
 #	
 #	randomForest
 #
-#
+#	NDCG: .8074963
 #
 #################################################################################
 ranOut = randomForest(as.factor(country_destination) ~ gender + signup_method
 		+ signup_flow + language + affiliate_channel + 
 		affiliate_provider  + first_affiliate_tracked + signup_app
-		+ first_device_type + first_browser,  importance = TRUE,
+		+ first_device_type + first_browser + date_account_created 
+		+ date_first_booking,  importance = TRUE,
 				ntrees = 500, data=train2)
 
 ranPred = predict(ranOut, newdata = test2,type = 'prob')
 
 ranPred = as.data.frame(ranPred)
+
+
+#initializing the output dataframe
+outputFrame4 = as.data.frame(matrix(nrow=nrow(test2), ncol = 6))
+
+outputFrame4 = rename(outputFrame4, c("V1" = "id", "V2" = "country1",
+				"V3" = "country2", "V4" = "country3",
+				"V5" = "country4", "V6" = "country5"))
+
+outputFrame4[,1] = test2[,1]
+
+
+for(i in 1:nrow(test2))
+{
+outputFrame4[i,2:6] = rownames(as.data.frame(sort(ranPred[i,], decreasing=TRUE)))[1:5]
+}
+head(outputFrame4)
+
+
+#falidating output for outputFrame4
+sum(is.na(outputFrame4))
+nrow(outputFrame4) == nrow(test2)
+nrow(outputFrame4) * ncol(outputFrame4) == nrow(test2) * 6
+
+
+system.time(NDCG(outputFrame4))
+
 
 
 
@@ -247,7 +275,7 @@ sum(as.data.frame(abs(bTreeP - NB.frame)) > .4)
 #averaging the predicted probabilities
 str(as.data.frame((bTreeP + NB.frame) / 2))
 
-EnsembleFrame = as.data.frame((.35 * bTreeP + .65 * NB.frame) )
+EnsembleFrame = as.data.frame((.3 * bTreeP +  .65 * NB.frame + .05 * ranPred) )
 
 
 
