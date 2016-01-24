@@ -97,7 +97,7 @@ test[,4] = as.numeric(test[,4])
 
 
 #edit The percentage of the dataset in the train2 and test2, used to build a model 
-size_of_train = floor(.85*nrow(train))
+size_of_train = floor(.7*nrow(train))
 ran_num_test = 1:nrow(train)
 
 #gets random numbers for train2 using a sample
@@ -205,36 +205,65 @@ system.time(NDCG(outputFrame))
 bTree = gbm(country_destination ~ gender + age + signup_method
 		+ signup_flow + language + affiliate_channel + 
 		affiliate_provider + first_affiliate_tracked + signup_app
-		+ first_device_type + first_browser ,	distribution = "multinomial", 
-		n.trees = 300, shrinkage = .1, interaction.depth =2,  data = train2)
+		+ first_device_type + first_browser + timestamp_first_active
+		+ action_type + device_type + secs_elapsed + action + action_detail
+		,	distribution = "multinomial", 
+		n.trees = 50, shrinkage = .1, interaction.depth =2,  data = train2)
 bTreeP = predict(bTree, newdata=test2, n.trees = 1000, type="response")
- head(as.data.frame(bTreeP[,1:12,1]))
+
 bTreeP = as.data.frame(bTreeP[,1:12,1])
 head(bTreeP)
 
 
 
+bTreeP[,13] = test2[,1]
+bTreeP = rename(bTreeP, c('V13' = 'id'))
+
+#average probabilities by id
+bTreeP[,1] = ave(bTreeP$AU, bTreeP$id, FUN=mean)
+bTreeP[,2] = ave(bTreeP$CA,bTreeP$id, FUN=mean)
+bTreeP[,3] = ave(bTreeP$DE, bTreeP$id, FUN=mean)
+bTreeP[,4] = ave(bTreeP$ES,bTreeP$id, FUN=mean)
+bTreeP[,5] = ave(bTreeP$FR, bTreeP$id, FUN=mean)
+bTreeP[,6] = ave(bTreeP$GB,bTreeP$id, FUN=mean)
+bTreeP[,7] = ave(bTreeP$IT, bTreeP$id, FUN=mean)
+bTreeP[,8] = ave(bTreeP$NDF,bTreeP$id, FUN=mean)
+bTreeP[,9] = ave(bTreeP$NL, bTreeP$id, FUN=mean)
+bTreeP[,10] = ave(bTreeP$other,bTreeP$id, FUN=mean)
+bTreeP[,11] = ave(bTreeP$PT,bTreeP$id, FUN=mean)
+bTreeP[,12] = ave(bTreeP$US, bTreeP$id, FUN=mean)
+
+
+
+#remove duplicate ids
+bTreeP2 = bTreeP[!duplicated(bTreeP$id),]
+
+#initialize test3 for NDCG
+test3 = test2[!duplicated(test2$id),]
+
+
+
 #initializing the output dataframe
-outputFrame2 = as.data.frame(matrix(nrow=nrow(test2), ncol = 6))
+outputFrame2 = as.data.frame(matrix(nrow=nrow(test3), ncol = 6))
 
 outputFrame2 = rename(outputFrame2, c("V1" = "id", "V2" = "country1",
 				"V3" = "country2", "V4" = "country3",
 				"V5" = "country4", "V6" = "country5"))
 
-outputFrame2[,1] = test2[,1]
+outputFrame2[,1] = test3[,1]
 
 
-for(i in 1:nrow(test2))
+for(i in 1:nrow(test3))
 {
-outputFrame2[i,2:6] = colnames(as.data.frame(sort(bTreeP[i,], decreasing=TRUE)))[1:5]
+outputFrame2[i,2:6] = colnames(sort(bTreeP2[i,1:12], decreasing=TRUE))[1:5]
 }
 head(outputFrame2)
 
 
 #falidating output for outputFrame2
 sum(is.na(outputFrame2))
-nrow(outputFrame2) == nrow(test2)
-nrow(outputFrame2) * ncol(outputFrame2) == nrow(test2) * 6
+nrow(outputFrame2) == nrow(test3)
+nrow(outputFrame2) * ncol(outputFrame2) == nrow(test3) * 6
 
 
 system.time(NDCG(outputFrame2))
