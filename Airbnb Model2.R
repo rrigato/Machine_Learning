@@ -135,16 +135,6 @@ summary(NBmod)
 #based on Naive Bayes from train2 for test2
 NB.pred = predict(NBmod, newdata = test2, type = "raw")
 
-#initializing the output dataframe
-outputFrame = as.data.frame(matrix(nrow=nrow(test2), ncol = 6))
-
-outputFrame = rename(outputFrame, c("V1" = "id", "V2" = "country1",
-				"V3" = "country2", "V4" = "country3",
-				"V5" = "country4", "V6" = "country5"))
-
-outputFrame[,1] = test2[,1]
-
-
 NB.frame = as.data.frame(NB.pred)
 
 
@@ -175,17 +165,27 @@ NB.frame2 = NB.frame[!duplicated(NB.frame$id),]
 test3 = test2[!duplicated(test2$id),]
 
 
+#initializing the output dataframe
+outputFrame = as.data.frame(matrix(nrow=nrow(test3), ncol = 6))
+
+outputFrame = rename(outputFrame, c("V1" = "id", "V2" = "country1",
+				"V3" = "country2", "V4" = "country3",
+				"V5" = "country4", "V6" = "country5"))
+
+outputFrame[,1] = test3[,1]
+
+
 for(i in 1:nrow(test3))
 {
-outputFrame[i,2:6] = colnames(sort(NB.frame2[i,], decreasing=TRUE))[1:5]
+outputFrame[i,2:6] = colnames(sort(NB.frame2[i,1:12], decreasing=TRUE))[1:5]
 }
 head(outputFrame)
 
 
 #falidating output for outputFrame
 sum(is.na(outputFrame))
-nrow(outputFrame) == nrow(test2)
-nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 6
+nrow(outputFrame) == nrow(test3)
+nrow(outputFrame) * ncol(outputFrame) == nrow(test3) * 6
 
 
 system.time(NDCG(outputFrame))
@@ -199,7 +199,7 @@ system.time(NDCG(outputFrame))
 #
 #
 #
-#
+#.7538923 for 50 tree gbm
 #######################################################################################
 
 bTree = gbm(country_destination ~ gender + age + signup_method
