@@ -22,57 +22,80 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 	#initialize the matrix	
-	 mtest2  = train
-	mtest2[,17:390] = 0
-	mtest2[,1:4] = train[,1:4]
-	mtest2 = rename(mtest2, c('V1' = 'id', 'V2' = 'location',
-	 'V3' = 'fault_severity', 'V4' = 'severity_type'))
+	 mtrain2  = train
+	mtrain2[,17:376] = 0
+
+	#gets the observations of sessions which user_id are in train
+	trainSes = sessions[which(sessions$user_id %in% train$id),]
 
 
-#gets the unique 386 log_feature names as strings
-feature_name = as.character(log_feature[!duplicated(log_feature[,2]),2]) 
-for(i in 1:386)
+	#validation for trainSes
+	nrow(trainSes) == length(which(sessions$user_id %in% train$id))
+	ncol(trainSes) == ncol(sessions)
+	
+
+	#gets the observations of sessions which user_id are in test
+	testSes = sessions[which(sessions$user_id %in% test$id),]
+	
+	#validation for trainSes
+	nrow(testSes) == length(which(sessions$user_id %in% test$id))
+	ncol(testSes) == ncol(sessions)
+
+	length(which(sessions$user_id %in% test$id)) + length(which(sessions$user_id %in% train$id))
+
+
+#gets the unique 360 sessions Action names as strings
+feature_name = as.character(sessions[!duplicated(sessions[,2]),2]) 
+for(i in 1:360)
 {
 
 	#gets the value of each unique log_features
 	#then uses those as a column name
-	#starts at i+4 cause the first four columns of train are id,location
-	#fault_severity and severity_type  
-	colnames(mtest2)[i + 4] = 
+	#starts at i+16 cause the first 16 columns are 
+	colnames(mtrain2)[i + 16] = 
 	as.character(feature_name[i])
 }
-ncol(mtest2)
+ncol(mtrain2)
+#checks to make sure column names is equal to number of unique sessions$actions
+sum(unique(sessions$action)  != colnames(mtrain2)[17:376])
+
+train_row = 1
+column_num = 1
 
 
-train_row = 0
-column_num = 0
 
-#puts the volume into the observation corresponding to the log_feature 
+actionName = colnames(mtrain2)
+
+#puts the volume into the observation corresponding to the sessions
 #variable name
-for(z in 1:nrow(log_feature))
+for(z in 1:nrow(trainSes))
 {
-	#gets the row in train where the id corresponds to the id in log_feature
-	train_row  = which(train$id == log_feature$id[z])
-
-	#getting the column which corresponds to 'feature x' 
-	column_num = which(colnames(mtest2) == log_feature$log_feature[z])
-	
-	#if it is length 0 then the observation corresponds to the test set
-	#otherwise place it where it belongs in mtestm
-	if(length(train_row) != 0)
+	#gets the row in train where the id corresponds to the id in 
+	#sessions
+	if (train$id[train_row] == as.character(trainSes$user_id[z]))
 	{
-		mtest2[train_row,column_num] = 
-		mtest2[train_row,column_num] + log_feature$volume[z]
+		#getting the column which corresponds to 'action x' 
+		column_num = which( actionName == as.character(trainSes$action[z]))
+
+	}else{
+	
+		train_row  = which(train$id == as.character(trainSes$user_id[z]))
+		
+		#getting the column which corresponds to 'action x' 
+		column_num = which(actionName == as.character(trainSes$action[z]))
 	}
+
+	mtrain2[train_row,column_num] = mtrain2[train_row,column_num] + 1
+
 }
 
 
 #tests to make sure the sum of the volume is equal to the sum of the volume
 #for train observations
-sum(mtest2[,5:390]) ==sum(log_feature[log_feature$id %in% train$id,3])
+sum(mtrain2[,17:377]) ==length(sessions[sessions$user_id %in% train$id,2])
 
-#set train equal to mtest2
-train = mtest2
+#set train equal to mtrain2
+train = mtrain2
 
 
 
