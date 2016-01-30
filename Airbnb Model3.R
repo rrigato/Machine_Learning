@@ -11,6 +11,12 @@
 #
 #
 ###################################################################################
+install.packages('microbenchmark')
+
+#used for testing speed of a function
+library(microbenchmark)
+
+
 
 library(class)
 
@@ -107,16 +113,18 @@ test2 = train[ran_num_test,]
 #
 ###############################################################################
 
+
+train3 = train2[,-c(1, 2, 4, 214, 223, 224, 225,
+		228, 274, 286, 297, 308:313, 314:322,  323:331, 332:345,346:360)]
 #have to take out 1,2,4(id, date_first_booked, date_create_account) 
 # and action variables that have no variation
 bTree = gbm(country_destination ~. , distribution = "multinomial",
-		 n.trees = 125, shrinkage = .1,
-		interaction.depth =3,  data = train2[,-c(1, 2, 4, 214, 223:225,
-		228, 274, 286, 297, 320:331, 332:345,346:360)])
+		 n.trees = 200, shrinkage = .1,
+		interaction.depth =2,  data = train3 )
 
-test3 = test2[,-c(1, 2, 4, 214, 223:225,
-		228, 274, 286, 297, 320:331, 332:345,346:360)]
-bTreeP = predict(bTree, newdata=test3, n.trees = 125, type="response")
+test3 = test2[,-c(1, 2, 4, 214, 223, 224, 225,
+		228, 274, 286, 297, 308:313, 314:322,  323:331, 332:345,346:360)]
+bTreeP = predict(bTree, newdata=test3, n.trees = 300, type="response")
 bTreeP = as.data.frame(bTreeP)
 head(bTreeP)
 
@@ -134,7 +142,7 @@ outputFrame[,1] = test2[,1]
 #The gsub function finds a pattern for a vector and replaces that pattern
 for(i in 1:nrow(test2))
 {
-	outputFrame[i,2:6] =  gsub(pattern = ".125", 
+	outputFrame[i,2:6] =  gsub(pattern = ".200", 
 	replace = "", x = colnames(sort(bTreeP[i,1:12], decreasing=TRUE))[1:5])
 
 }
@@ -148,7 +156,7 @@ nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 6
 
 
 
-system.time(NDCG(outputFrame))
+microbenchmark(NDCG(outputFrame))
 
 
 
