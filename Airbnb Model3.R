@@ -99,7 +99,8 @@ test2 = train[ran_num_test,]
 
 
 #######################################################################################
-#
+#	.823141 NDCG for 5 trees .1 shrinkage .8 train .2 test interaction.depth = 2
+#	.8304302 NDCG for 125 trees .1 shrinkage .8 train .2 test interaction.depth = 3
 #
 #
 #
@@ -109,14 +110,15 @@ test2 = train[ran_num_test,]
 #have to take out 1,2,4(id, date_first_booked, date_create_account) 
 # and action variables that have no variation
 bTree = gbm(country_destination ~. , distribution = "multinomial",
-		 n.trees = 100, shrinkage = .1,
-		interaction.depth =2,  data = train2[,-c(1, 2, 4, 214, 223:225,
+		 n.trees = 125, shrinkage = .1,
+		interaction.depth =3,  data = train2[,-c(1, 2, 4, 214, 223:225,
 		228, 274, 286, 297, 320:331, 332:345,346:360)])
 
 test3 = test2[,-c(1, 2, 4, 214, 223:225,
 		228, 274, 286, 297, 320:331, 332:345,346:360)]
-bTreeP = predict(bTree, newdata=test3, n.trees = 50, type="response")
+bTreeP = predict(bTree, newdata=test3, n.trees = 125, type="response")
 bTreeP = as.data.frame(bTreeP)
+head(bTreeP)
 
 
 
@@ -132,7 +134,7 @@ outputFrame[,1] = test2[,1]
 #The gsub function finds a pattern for a vector and replaces that pattern
 for(i in 1:nrow(test2))
 {
-	outputFrame[i,2:6] =  gsub(pattern = ".5", 
+	outputFrame[i,2:6] =  gsub(pattern = ".125", 
 	replace = "", x = colnames(sort(bTreeP[i,1:12], decreasing=TRUE))[1:5])
 
 }
@@ -146,7 +148,7 @@ nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 6
 
 
 
-
+system.time(NDCG(outputFrame))
 
 
 
