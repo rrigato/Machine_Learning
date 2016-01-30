@@ -63,7 +63,9 @@ library(e1071)
 library(gbm)
 
 #importing the datasets that were provided by Airbnb
-train <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainAction.csv")
+train <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainAction2.csv")
+
+
 test <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\test_users.csv")
 sessions <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\sessions.csv")
 countries <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\countries.csv")
@@ -103,11 +105,56 @@ test2 = train[ran_num_test,]
 #
 #
 ###############################################################################
-bTree = gbm(fault_severity ~. -id, distribution = "multinomial", n.trees = 300, shrinkage = .1,
-		interaction.depth =2,  data = train2)
+
+#have to take out 1,2,4(id, date_first_booked, date_create_account) 
+# and action variables that have no variation
+bTree = gbm(country_destination ~. , distribution = "multinomial",
+		 n.trees = 100, shrinkage = .1,
+		interaction.depth =2,  data = train2[,-c(1, 2, 4, 214, 223:225,
+		228, 274, 286, 297, 320:331, 332:345,346:360)])
+
+test3 = test2[,-c(1, 2, 4, 214, 223:225,
+		228, 274, 286, 297, 320:331, 332:345,346:360)]
+bTreeP = predict(bTree, newdata=test3, n.trees = 50, type="response")
+bTreeP = as.data.frame(bTreeP)
 
 
 
+outputFrame = as.data.frame(matrix(nrow=nrow(test2), ncol = 6))
+
+outputFrame = rename(outputFrame, c("V1" = "id", "V2" = "country1",
+				"V3" = "country2", "V4" = "country3",
+				"V5" = "country4", "V6" = "country5"))
+
+outputFrame[,1] = test2[,1]
+
+
+#The gsub function finds a pattern for a vector and replaces that pattern
+for(i in 1:nrow(test2))
+{
+	outputFrame[i,2:6] =  gsub(pattern = ".5", 
+	replace = "", x = colnames(sort(bTreeP[i,1:12], decreasing=TRUE))[1:5])
+
+}
+head(outputFrame)
+
+
+#falidating output for outputFrame
+sum(is.na(outputFrame))
+nrow(outputFrame) == nrow(test2)
+nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 6
+
+
+
+
+
+
+
+
+
+
+
+colSums(Filter(is.numeric, train))
 
 ###################################################################################
 #	Normalized Discounted Cumulative Gain
@@ -129,7 +176,7 @@ NDCG <- function(data_frame){
 	
 
 
-	temp = numeric(nrow(test3))
+	temp = numeric(nrow(test2))
 	#outer while should iterate nrow(data_frame) /5 times
 	for (i in 1:nrow(data_frame) )
 	{
@@ -139,7 +186,7 @@ NDCG <- function(data_frame){
 		score = 0
 
 		#determining which position the score is, should be one to five
-		score =  which(data_frame[i,] == as.character(test3$country_destination[i]))[1]
+		score =  which(data_frame[i,] == as.character(test2$country_destination[i]))[1]
 		score = score - 1
 		#if score is zero you will end up dividing by zero so you only want to divide if 
 		#score is not zero

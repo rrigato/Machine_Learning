@@ -97,5 +97,6 @@ sum(mtrain2[,17:377]) ==length(sessions[sessions$user_id %in% train$id,2])
 #set train equal to mtrain2
 train = mtrain2
 
-write.csv(mtrain2, 'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainAction.csv')
+write.csv(train, row.names = FALSE,
+ 'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainAction2.csv')
 
