@@ -165,13 +165,177 @@ for(z in 1:nrow(testSes))
 
 #tests to make sure the sum of the volume is equal to the sum of the volume
 #for test observations
-sum(mtest2[,17:377]) ==length(sessions[sessions$user_id %in% test$id,2])
+sum(mtest2[,16:375]) ==length(sessions[sessions$user_id %in% test$id,2])
 
 #set test equal to mtest2
 test = mtest2
 
 write.csv(test, row.names = FALSE,
  'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testAction2.csv')
+
+
+
+
+##############################################################################
+#Adding action type to train
+#
+#
+#
+###############################################################################
+
+
+	#initialize the matrix	
+	 mtrain2  = as.data.frame(matrix(nrow = nrow(train),
+					ncol = 12))
+	mtrain2[,2:12] = 0
+	mtrain2[,1] = train[,1]
+	mtrain2 = rename(mtrain2, c('V1' = 'id'))
+	#gets the observations of sessions which user_id are in train
+	trainSes = sessions[which(sessions$user_id %in% train$id),]
+
+
+	#validation for trainSes
+	nrow(trainSes) == length(which(sessions$user_id %in% train$id))
+	ncol(trainSes) == ncol(sessions)
+	
+
+	
+	length(which(sessions$user_id %in% test$id)) + length(which(sessions$user_id %in% train$id))
+
+
+#gets the unique 11 sessions action_type names as strings
+feature_name = as.character(sessions[!duplicated(sessions[,3]),3]) 
+for(i in 1:11)
+{
+
+	#gets the value of each unique action_name
+	#then uses those as a column name
+	#starts at i+1 cause the first 1 columns are 
+	colnames(mtrain2)[i + 1] = 
+	as.character(feature_name[i])
+}
+ncol(mtrain2)
+#checks to make sure column names is equal to number of unique sessions$actions
+sum(unique(sessions$action_type)  != colnames(mtrain2)[2:12])
+
+train_row = 1
+column_num = 1
+
+
+
+actionName = colnames(mtrain2)
+
+#puts the volume into the observation corresponding to the sessions
+#variable name
+for(z in 1:nrow(trainSes))
+{
+	#gets the row in train where the id corresponds to the id in 
+	#sessions
+	if (train$id[train_row] == as.character(trainSes$user_id[z]))
+	{
+		#getting the column which corresponds to 'action x' 
+		column_num = which( actionName == as.character(trainSes$action_type[z]))
+
+	}else{
+	
+		train_row  = which(train$id == as.character(trainSes$user_id[z]))
+		
+		#getting the column which corresponds to 'action x' 
+		column_num = which(actionName == as.character(trainSes$action_type[z]))
+	}
+
+	mtrain2[train_row,column_num] = mtrain2[train_row,column_num] + 1
+
+}
+
+
+#tests to make sure the sum of the volume is equal to the sum of the volume
+#for train observations
+sum(mtrain2[,2:12]) ==length(sessions[sessions$user_id %in% train$id,3])
+
+#set train equal to mtrain2
+train = mtrain2
+
+write.csv(train, row.names = FALSE,
+ 'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainAction2.csv')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################################################################
+#	manipulate age/gender prior
+#
+#
+#
+#
+#
+############################################################################
+
+AGPrior = as.data.frame(matrix(nrow = nrow(age_gender_bkts)*5,
+					ncol = ncol(age_gender_bkts) + 1))
+
+
+AGPrior[,1:3] = as.character(AGPrior[,1:3])
+z = 1;
+for( i in 1:nrow(age_gender_bkts))
+{
+
+	pos = regexpr('-', age_gender_bkts$age_bucket[i])
+	if (pos == -1)
+	{
+		for(d in (100:104))
+		{
+			AGPrior[z,1:5]= age_gender_bkts[i,1:5];
+			AGPrior[z,ncol(age_gender_bkts) + 1] = d;
+			z = z + 1;
+		}
+		
+	}else if (pos ==2)
+	{
+		start = as.numeric(substr(age_gender_bkts$age_bucket[i],1,1));
+		end = as.numeric(substr(age_gender_bkts$age_bucket[i],3,3));
+		for(d in (start:end))
+		{
+
+			AGPrior[z,ncol(age_gender_bkts) + 1] = d;
+			AGPrior[z,1:5]= age_gender_bkts[i,1:5];
+			
+			z = z + 1;
+		}
+
+	}else if (pos ==3)
+	{
+		start = as.numeric(substr(age_gender_bkts$age_bucket[i],1,2));
+		end = as.numeric(substr(age_gender_bkts$age_bucket[i],4,5));
+		for(d in (start:end))
+		{
+			AGPrior[z,1:5]= age_gender_bkts[i,1:5];
+			AGPrior[z,ncol(age_gender_bkts) + 1] = d;
+			z = z + 1;
+		}
+
+	}
+
+
+}
+
+
+
+
+
 
 
 
