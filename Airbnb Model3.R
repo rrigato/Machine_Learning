@@ -73,14 +73,21 @@ library(gbm)
 
 #importing the datasets that were provided by Airbnb
 train <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainAction2.csv")
-
+trainType <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainActionType.csv")
 
 test <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testAction2.csv")
+testType <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testActionType.csv")
+
 sessions <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\sessions.csv")
 countries <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\countries.csv")
 age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gender_bkts.csv")
 
 
+
+train = merge(train, trainType, by = 'id')
+
+
+test = merge(test, testType, by = 'id')
 
 
 ################################################################
@@ -111,6 +118,13 @@ test2 = train[ran_num_test,]
 #	.823141 NDCG for 5 trees .1 shrinkage .8 train .2 test interaction.depth = 2
 #	.8304302 NDCG for 125 trees .1 shrinkage .8 train .2 test interaction.depth = 3
 #	.8308948 NDCG for 200 trees .1 shrinkage .8 train .2 test interaction.depth = 2
+#
+#	.8284771 NDCG for 100 trees .1 shrinkage .8 train .2 test interaction.depth = 2
+#
+#
+#
+#
+#
 #
 #
 #
