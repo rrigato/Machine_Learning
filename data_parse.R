@@ -447,6 +447,179 @@ write.csv(mtrain2, row.names = FALSE,
 
 
 
+	#initialize the matrix	
+	 mtest2  = as.data.frame(matrix(nrow = nrow(test),
+					ncol = 157))
+	mtest2[,2:157] = 0
+	mtest2[,1] = test[,1]
+	mtest2 = rename(mtest2, c('V1' = 'id'))
+	#gets the observations of sessions which user_id are in test
+	testSes = sessions[which(sessions$user_id %in% test$id),]
+
+
+	#validation for testSes
+	nrow(testSes) == length(which(sessions$user_id %in% test$id))
+	ncol(testSes) == ncol(sessions)
+	
+
+
+#gets the unique 156 sessions action_detail names as strings
+feature_name = as.character(sessions[!duplicated(sessions[,4]),4]) 
+for(i in 1:156)
+{
+
+	#gets the value of each unique action_name
+	#then uses those as a column name
+	#starts at i+1 cause the first 1 columns are 
+	colnames(mtest2)[i + 1] = 
+	as.character(feature_name[i])
+}
+ncol(mtest2)
+#checks to make sure column names is equal to number of unique sessions$actions
+sum(unique(sessions$action_detail)  != colnames(mtest2)[2:157])
+
+test_row = 1
+column_num = 1
+
+
+
+actionName = colnames(mtest2)
+
+#puts the action_detail into the observation corresponding to the sessions
+#variable name
+for(z in 1:nrow(testSes))
+{
+	#gets the row in test where the id corresponds to the id in 
+	#sessions
+	if (test$id[test_row] == as.character(testSes$user_id[z]))
+	{
+		#getting the column which corresponds to 'action x' 
+		column_num = which( actionName == as.character(testSes$action_detail[z]))
+
+	}else{
+	
+		test_row  = which(test$id == as.character(testSes$user_id[z]))
+		
+		#getting the column which corresponds to 'action x' 
+		column_num = which(actionName == as.character(testSes$action_detail[z]))
+	}
+
+	mtest2[test_row,column_num] = mtest2[test_row,column_num] + 1
+
+}
+
+
+#tests to make sure the sum of the volume is equal to the sum of the volume
+#for test observations
+sum(mtest2[,2:157]) ==length(sessions[sessions$user_id %in% test$id,4])
+sum(mtest2[,1] != test[,1])
+
+
+write.csv(mtest2, row.names = FALSE,
+ 'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testActionDetail.csv')
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+#Adding device_type to train
+#
+#
+#
+###############################################################################
+
+
+	#initialize the matrix	
+	 mtrain2  = as.data.frame(matrix(nrow = nrow(train),
+					ncol = 15))
+	mtrain2[,2:15] = 0
+	mtrain2[,1] = train[,1]
+	mtrain2 = rename(mtrain2, c('V1' = 'id'))
+	#gets the observations of sessions which user_id are in train
+	trainSes = sessions[which(sessions$user_id %in% train$id),]
+
+
+	#validation for trainSes
+	nrow(trainSes) == length(which(sessions$user_id %in% train$id))
+	ncol(trainSes) == ncol(sessions)
+	
+
+
+#gets the unique 14 sessions action_detail names as strings
+feature_name = as.character(sessions[!duplicated(sessions[,5]),5]) 
+for(i in 1:14)
+{
+
+	#gets the value of each unique action_name
+	#then uses those as a column name
+	#starts at i+1 cause the first 1 columns are 
+	colnames(mtrain2)[i + 1] = 
+	as.character(feature_name[i])
+}
+ncol(mtrain2)
+#checks to make sure column names is equal to number of unique sessions$actions
+sum(unique(sessions$device_type)  != colnames(mtrain2)[2:15])
+
+train_row = 1
+column_num = 1
+
+
+
+actionName = colnames(mtrain2)
+
+#puts the action_detail into the observation corresponding to the sessions
+#variable name
+for(z in 1:nrow(trainSes))
+{
+	#gets the row in train where the id corresponds to the id in 
+	#sessions
+	if (train$id[train_row] == as.character(trainSes$user_id[z]))
+	{
+		#getting the column which corresponds to 'action x' 
+		column_num = which( actionName == as.character(trainSes$device_type[z]))
+
+	}else{
+	
+		train_row  = which(train$id == as.character(trainSes$user_id[z]))
+		
+		#getting the column which corresponds to 'action x' 
+		column_num = which(actionName == as.character(trainSes$device_type[z]))
+	}
+
+	mtrain2[train_row,column_num] = mtrain2[train_row,column_num] + 1
+
+}
+
+
+#tests to make sure the sum of the volume is equal to the sum of the volume
+#for train observations
+sum(mtrain2[,2:157]) ==length(sessions[sessions$user_id %in% train$id,4])
+sum(mtrain2[,1] != train[,1])
+
+
+write.csv(mtrain2, row.names = FALSE,
+ 'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainActionDetail.csv')
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
