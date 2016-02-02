@@ -74,9 +74,16 @@ library(gbm)
 #importing the datasets that were provided by Airbnb
 train <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainAction2.csv")
 trainType <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainActionType.csv")
+trainActionDetail <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainActionDetail.csv")
+trainDevice <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\trainDeviceType.csv")
+
+
 
 test <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testAction2.csv")
 testType <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testActionType.csv")
+testActionDetail <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testActionDetail.csv")
+testDevice <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testDeviceType.csv")
+
 
 sessions <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\sessions.csv")
 countries <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\countries.csv")
@@ -85,9 +92,13 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 train = merge(train, trainType, by = 'id')
+train = merge(train, trainActionDetail, by = 'id')
+train = merge(train, trainDevice, by = 'id')
 
 
 test = merge(test, testType, by = 'id')
+test = merge(test, testActionDetail, by = 'id')
+test = merge(test, testDevice, by = 'id')
 
 
 ################################################################
@@ -120,9 +131,14 @@ test2 = train[ran_num_test,]
 #	.8308948 NDCG for 200 trees .1 shrinkage .8 train .2 test interaction.depth = 2
 #
 #	.8284771 NDCG for 100 trees .1 shrinkage .8 train .2 test interaction.depth = 2
+#	includes 'Action' variable from sessions
+#
+#	.8288097 NDCG for 100 trees .1 shrinkage .8 train .2 test interaction.depth = 2
+#	includes 'Action' and 'ActionDetail' variable from sessions
 #
 #
-#
+#	.8292822 NDCG for 100 trees .1 shrinkage .8 train .2 test interaction.depth = 2
+#	includes 'Action' and 'ActionDetail' and 'browser' variable from sessions
 #
 #
 #
@@ -130,17 +146,27 @@ test2 = train[ran_num_test,]
 #
 ###############################################################################
 
+remove = numeric()
+z = 1
+for( i in 17:ncol(train2))
+{
+	if (sum(train2[,i]) < 150)
+	{
+		remove[z] = i
+		z = z + 1
+	}
+}
+train3 = train2[,-c(1,2,4, remove)]
+length(remove)
+length(remove) + 3 + ncol(train3) == ncol(train)
 
-train3 = train2[,-c(1, 2, 4, 214, 223, 224, 225,
-		228, 274, 286, 297, 308:313, 314:322,  323:331, 332:345,346:360)]
 #have to take out 1,2,4(id, date_first_booked, date_create_account) 
 # and action variables that have no variation
 bTree = gbm(country_destination ~. , distribution = "multinomial",
-		 n.trees = 200, shrinkage = .1,
+		 n.trees = 100, shrinkage = .1,
 		interaction.depth =2,  data = train3 )
 
-test3 = test2[,-c(1, 2, 4, 214, 223, 224, 225,
-		228, 274, 286, 297, 308:313, 314:322,  323:331, 332:345,346:360)]
+test3 = test2[,-c(1,2,4, remove)]
 bTreeP = predict(bTree, newdata=test3, n.trees = 300, type="response")
 bTreeP = as.data.frame(bTreeP)
 head(bTreeP)
@@ -159,7 +185,7 @@ outputFrame[,1] = test2[,1]
 #The gsub function finds a pattern for a vector and replaces that pattern
 for(i in 1:nrow(test2))
 {
-	outputFrame[i,2:6] =  gsub(pattern = ".200", 
+	outputFrame[i,2:6] =  gsub(pattern = ".100", 
 	replace = "", x = colnames(sort(bTreeP[i,1:12], decreasing=TRUE))[1:5])
 
 }
