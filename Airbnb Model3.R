@@ -384,6 +384,78 @@ train2Matrix[which(is.na(train2Matrix[,3])),3] = -1
 test3Matrix[which(is.na(test3Matrix[,3])),3] = -1
 
 
+#turn train2response into numeric
+
+train3_response = numeric(length(train2_response))
+for (i in 1:length(train2_response))
+{
+
+if(train2_response[i] == 'US')
+{
+	train3_response[i] = 0
+}
+if(train2_response[i] == 'NDF')
+{
+	train3_response[i] = 1
+}
+
+if(train2_response[i] == 'other')
+{
+	train3_response[i] = 2
+}
+if(train2_response[i] == 'AU')
+{
+	train3_response[i] = 3
+}
+if(train2_response[i] == 'ES')
+{
+	train3_response[i] = 4
+}
+if(train2_response[i] == 'IT')
+{
+	train3_response[i] = 5
+}
+
+if(train2_response[i] == 'GB')
+{
+	train3_response[i] = 6
+}
+if(train2_response[i] == 'FR')
+{
+	train3_response[i] = 7
+}
+
+if(train2_response[i] == 'CA')
+{
+	train3_response[i] = 8
+}
+
+if(train2_response[i] == 'DE')
+{
+	train3_response[i] = 9
+}
+
+if(train2_response[i] == 'NL')
+{
+	train3_response[i] = 10
+}
+if(train2_response[i] == 'PT')
+{
+	train3_response[i] = 11
+}
+
+}
+
+
+
+
+
+
+
+
+
+
+
 #cross_validation parameters
 #make sure to change the number of classes
 numberOfClasses = 12
