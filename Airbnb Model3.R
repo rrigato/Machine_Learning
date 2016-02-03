@@ -309,6 +309,159 @@ microbenchmark(NDCG(outputFrame), times = 1 )
 
 
 
+#######################################################################################
+#xgboost
+#
+#
+#
+#
+#
+#
+#######################################################################################
+
+
+
+remove = numeric()
+z = 1
+for( i in 17:ncol(train2))
+{
+	if (sum(train2[,i]) < 150)
+	{
+		remove[z] = i
+		z = z + 1
+	}
+}
+
+
+#saves the outcome variable into a seperate vector
+train2_response = train2[,16]
+test3_response = test3[,16]
+
+
+
+
+
+#stores the ids in a vector 
+train2id = train2[,1]
+test3id = test2[,1]
+
+
+#checks that the number of ids in the vector is equal to the number of rows in 
+#the data frames
+length(train2id) == nrow(train2)
+length(test3id) == nrow(test3)
+
+
+
+
+
+
+
+#1 is removed because it is an id
+#2 is removed cause it has the same information as timestamp_first_active
+#4 is removed cause we don't have date_first_booking for observations that we are modeling
+#16 is removed because it is what we are trying to predict
+#remove is a vector with all columns that have less than 150 observations.
+train2 = train2[,-c(1,2,4, 16, remove)]
+test2 = test2[,-c(1,2,4, 16, remove)]
+
+
+
+
+length(train2_response) == nrow(train2)
+length(test3_response) == nrow(test3)
+
+train2 = data.matrix(train2)
+test2 = data.matrix(test2)
+train2Matrix = train2
+
+
+test3Matrix = test3
+
+
+#Turns the observations which have NA for age into -1
+train2Matrix[which(is.na(train2Matrix[,3])),3] = -1
+test3Matrix[which(is.na(test3Matrix[,3])),3] = -1
+
+
+#cross_validation parameters
+#make sure to change the number of classes
+numberOfClasses = 12
+param = list( "objective" = "multi:softprob",
+		"eval_metric" = "mlogloss",
+		"num_class" = numberOfClasses
+		)
+cv.nround <- 1000
+cv.nfold <- 3
+
+#setting up cross_validation
+bst.cv = xgb.cv(param=param, data = train2Matrix, label = train2_response, 
+                nfold = cv.nfold, nrounds = cv.nround)
+
+#test for optimal nround
+bst.cv[which(min(bst.cv$test.mlogloss.mean) == bst.cv$test.mlogloss.mean),]
+
+#sets the number of rounds based on the number of rounds determined by cross_validation
+nround = which(min(bst.cv$test.mlogloss.mean) == bst.cv$test.mlogloss.mean)
+#actual xgboost
+bst = xgboost(param=param, data = train2Matrix, label = train2_response,
+		gamma = .1, eta = .1, nrounds=nround,
+		subsample = .75, max_delta_step = 15)
+
+
+
+
+
+
+
+# Get the feature real names
+names <- dimnames(train2Matrix)[[2]]
+
+# Compute feature importance matrix
+importance_matrix <- xgb.importance(names, model = bst); importance_matrix
+
+# Nice graph for importance
+xgb.plot.importance(importance_matrix[1:100,])
+
+
+
+#the predictions are in a nrow(test3)*3 long vector
+#bstPred[1:3] is the probability of 0,1,2 for fault_severity
+#for the first observation of test2
+#has to be a numeric matrix just like the training set
+bstPred = predict(bst, test3Matrix)
+is.vector(bstPred)
+str(bstPred)
+
+
+#initialize output frame
+outputFrame = data.frame(matrix(nrow= nrow(test2), ncol=4))
+outputFrame = rename(outputFrame, c("X1" = "id", "X2" = "predict_0", "X3" = "predict_1","X4" = "predict_2")) 
+
+#Puts the ids for the observations into the first column of outputFrame[,1]
+outputFrame[,1] = test2[,1]
+#test to make sure ids are the same
+sum(outputFrame[,1] != test2[,1])
+z_element = 1
+for (i in 1:nrow(test2))
+{
+	for (z in 1:3)
+	{
+		#the ith row of outputFrame is given observation z_element
+		#probability of occuring from bstPred
+		#column z+1 since id is in column 1
+		outputFrame[i,z+1] = bstPred[z_element]
+		z_element = z_element + 1
+	}
+}
+
+
+
+
+
+
+
+
 
 
 
