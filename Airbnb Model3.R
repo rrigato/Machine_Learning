@@ -158,7 +158,7 @@ for( i in 17:ncol(train2))
 }
 train3 = train2[,-c(1,2,4, remove)]
 length(remove)
-length(remove) + 3 + ncol(train3) == ncol(train)
+length(remove) + 3 + ncol(train3) length(remove2) == ncol(train)
 
 #have to take out 1,2,4(id, date_first_booked, date_create_account) 
 # and action variables that have no variation
@@ -244,7 +244,7 @@ randomForest(factor(country_destination) ~. ,data = train3)
 #	
 #	gbm has to be a data.frame
 #
-#
+#	
 #
 ##############################################################################################
 
@@ -313,14 +313,14 @@ microbenchmark(NDCG(outputFrame), times = 1 )
 #xgboost
 #
 #
-#
-#
+#.8297489 NDCG for 35 rounds
+#.8310828 NDCG for 100 rounds 254 variables
 #
 #
 #######################################################################################
+test3 = test2
 
-
-
+remove2 = which(colnames(train2) %in% temp$Feature)
 remove = numeric()
 z = 1
 for( i in 17:ncol(train2))
@@ -362,17 +362,18 @@ length(test3id) == nrow(test3)
 #4 is removed cause we don't have date_first_booking for observations that we are modeling
 #16 is removed because it is what we are trying to predict
 #remove is a vector with all columns that have less than 150 observations.
-train2 = train2[,-c(1,2,4, 16, remove)]
-test2 = test2[,-c(1,2,4, 16, remove)]
+#remove2 is feature engineering
+train2 = train2[,-c(1,2,4, 16, remove, remove2)]
+test3 = test3[,-c(1,2,4, 16, remove, remove2)]
 
 
-
+length(remove) + 3 + ncol(train2) +length(remove2) == ncol(train)
 
 length(train2_response) == nrow(train2)
 length(test3_response) == nrow(test3)
 
 train2 = data.matrix(train2)
-test2 = data.matrix(test2)
+test3 = data.matrix(test3)
 train2Matrix = train2
 
 
@@ -384,77 +385,31 @@ train2Matrix[which(is.na(train2Matrix[,3])),3] = -1
 test3Matrix[which(is.na(test3Matrix[,3])),3] = -1
 
 
+
+
+
 #turn train2response into numeric
 
 train3_response = numeric(length(train2_response))
-for (i in 1:length(train2_response))
-{
-
-if(train2_response[i] == 'US')
-{
-	train3_response[i] = 0
-}
-if(train2_response[i] == 'NDF')
-{
-	train3_response[i] = 1
-}
-
-if(train2_response[i] == 'other')
-{
-	train3_response[i] = 2
-}
-if(train2_response[i] == 'AU')
-{
-	train3_response[i] = 3
-}
-if(train2_response[i] == 'ES')
-{
-	train3_response[i] = 4
-}
-if(train2_response[i] == 'IT')
-{
-	train3_response[i] = 5
-}
-
-if(train2_response[i] == 'GB')
-{
-	train3_response[i] = 6
-}
-if(train2_response[i] == 'FR')
-{
-	train3_response[i] = 7
-}
-
-if(train2_response[i] == 'CA')
-{
-	train3_response[i] = 8
-}
-
-if(train2_response[i] == 'DE')
-{
-	train3_response[i] = 9
-}
-
-if(train2_response[i] == 'NL')
-{
-	train3_response[i] = 10
-}
-if(train2_response[i] == 'PT')
-{
-	train3_response[i] = 11
-}
-
-}
 
 
+#vectorized solution
+train3_response[which(train2_response == 'US')] = 0
+train3_response[which(train2_response == 'NDF')] = 1
+train3_response[which(train2_response == 'other')] = 2
+train3_response[which(train2_response == 'AU')] = 3
+train3_response[which(train2_response == 'ES')] = 4
+train3_response[which(train2_response == 'IT')] = 5
+train3_response[which(train2_response == 'GB')] = 6
+train3_response[which(train2_response == 'FR')] = 7
+train3_response[which(train2_response == 'CA')] = 8
+train3_response[which(train2_response == 'DE')] = 9
+train3_response[which(train2_response == 'NL')] = 10
+train3_response[which(train2_response == 'PT')] = 11
 
-
-
-
-
-
-
-
+class(train3_response)
+length(train2_response == 'GB') == length(train3_response == 6)
+train2_response = train3_response
 
 #cross_validation parameters
 #make sure to change the number of classes
@@ -463,7 +418,7 @@ param = list( "objective" = "multi:softprob",
 		"eval_metric" = "mlogloss",
 		"num_class" = numberOfClasses
 		)
-cv.nround <- 1000
+cv.nround <- 250
 cv.nfold <- 3
 
 #setting up cross_validation
@@ -475,6 +430,7 @@ bst.cv[which(min(bst.cv$test.mlogloss.mean) == bst.cv$test.mlogloss.mean),]
 
 #sets the number of rounds based on the number of rounds determined by cross_validation
 nround = which(min(bst.cv$test.mlogloss.mean) == bst.cv$test.mlogloss.mean)
+
 #actual xgboost
 bst = xgboost(param=param, data = train2Matrix, label = train2_response,
 		gamma = .1, eta = .1, nrounds=nround,
@@ -507,17 +463,22 @@ str(bstPred)
 
 
 #initialize output frame
-outputFrame = data.frame(matrix(nrow= nrow(test2), ncol=4))
-outputFrame = rename(outputFrame, c("X1" = "id", "X2" = "predict_0", "X3" = "predict_1","X4" = "predict_2")) 
+outputFrame = data.frame(matrix(nrow= nrow(test2), ncol=13))
+outputFrame = rename(outputFrame, c("X1" = "id", "X2" = "US", 
+		"X3" = "NDF","X4" = "other", "X5"="AU", "X6" = "ES", "X7" = "IT",
+		"X8" = "GB", "X9" = "FR", "X10" = "CA", "X11" = "DE",
+		"X12" = "NL", "X13" = "PT")) 
 
 #Puts the ids for the observations into the first column of outputFrame[,1]
 outputFrame[,1] = test2[,1]
 #test to make sure ids are the same
 sum(outputFrame[,1] != test2[,1])
 z_element = 1
+
+#puts the probabilities in the outputFrame
 for (i in 1:nrow(test2))
 {
-	for (z in 1:3)
+	for (z in 1:12)
 	{
 		#the ith row of outputFrame is given observation z_element
 		#probability of occuring from bstPred
@@ -532,6 +493,24 @@ for (i in 1:nrow(test2))
 
 
 
+#The gsub function finds a pattern for a vector and replaces that pattern
+for(i in 1:nrow(test2))
+{
+	outputFrame[i,2:6] =   colnames(sort(outputFrame[i,2:13], decreasing=TRUE))[1:5]
+
+}
+head(outputFrame)
+
+
+#falidating output for outputFrame
+sum(is.na(outputFrame))
+nrow(outputFrame) == nrow(test2)
+nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 6
+
+
+
+
+microbenchmark(NDCG(outputFrame), times = 1 )
 
 
 
