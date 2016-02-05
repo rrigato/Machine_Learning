@@ -18,7 +18,8 @@
 
 
 ################################################################
-#	implementation of extreme gradient boosting algorithms(xgboost)
+#	Turning the output which has five columns as predictions,
+#into 5 rows with the same unique id.
 #
 #
 ##################################################################
