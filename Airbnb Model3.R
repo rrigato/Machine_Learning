@@ -315,8 +315,9 @@ microbenchmark(NDCG(outputFrame), times = 1 )
 #
 #.8297489 NDCG for 35 rounds
 #.8310828 NDCG for 100 rounds 254 variables
-#
-#
+#.8080378 NDCG for 250 rounds 254 variables
+#.8326883 NDCG for 150 rounds all variables
+#.8194414 NDCG for 200 rounds 367 variables
 #######################################################################################
 test3 = test2
 
@@ -325,7 +326,7 @@ remove = numeric()
 z = 1
 for( i in 17:ncol(train2))
 {
-	if (sum(train2[,i]) < 150)
+	if (sum(train2[,i]) < 1)
 	{
 		remove[z] = i
 		z = z + 1
@@ -367,7 +368,7 @@ train2 = train2[,-c(1,2,4, 16, remove, remove2)]
 test3 = test3[,-c(1,2,4, 16, remove, remove2)]
 
 
-length(remove) + 3 + ncol(train2) +length(remove2) == ncol(train)
+length(remove) + 4 + ncol(train2) +length(remove2) == ncol(train)
 
 length(train2_response) == nrow(train2)
 length(test3_response) == nrow(test3)
@@ -453,8 +454,8 @@ xgb.plot.importance(importance_matrix[1:100,])
 
 
 
-#the predictions are in a nrow(test3)*3 long vector
-#bstPred[1:3] is the probability of 0,1,2 for fault_severity
+#the predictions are in a nrow(test3)*4 long vector
+#bstPred[1:12] is the probability of each country
 #for the first observation of test2
 #has to be a numeric matrix just like the training set
 bstPred = predict(bst, test3Matrix)
@@ -505,7 +506,7 @@ head(outputFrame)
 #falidating output for outputFrame
 sum(is.na(outputFrame))
 nrow(outputFrame) == nrow(test2)
-nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 6
+nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 13
 
 
 
