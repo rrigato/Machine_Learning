@@ -26,7 +26,8 @@
 
 
 test3id = test[,1]
-test3 = test[,-c(1)]
+test3 = test[,-c(1,2,4, 16, remove, remove2)]
+
 
 
 
@@ -35,6 +36,9 @@ test3 = test[,-c(1)]
 
 test3Matrix = data.matrix(test3)
 
+
+#Turns the observations which have NA for age into -1
+test3Matrix[which(is.na(test3Matrix[,3])),3] = -1
 
 
 
@@ -61,6 +65,8 @@ outputFrame[,1] = test[,1]
 sum(outputFrame[,1] != test[,1])
 z_element = 1
 
+
+
 #puts the probabilities in the outputFrame
 for (i in 1:nrow(test))
 {
@@ -76,12 +82,16 @@ for (i in 1:nrow(test))
 
 
 
+outputFrame2 =  data.frame(matrix(nrow= nrow(test), ncol=6))
 
+outputFrame2 = rename(outputFrame2, c("X1" = "id", "X2" = "C1", 
+		"X3" = "C2","X4" = "C3", "X5"="C4", "X6" = "C5")) 
 
+outputFrame2[,1] = outputFrame[,1]
 #The gsub function finds a pattern for a vector and replaces that pattern
 for(i in 1:nrow(test))
 {
-	outputFrame[i,2:6] =   colnames(sort(outputFrame[i,2:13], decreasing=TRUE))[1:5]
+	outputFrame2[i,2:6] =   colnames(sort(outputFrame[i,2:13], decreasing=TRUE))[1:5]
 
 }
 
@@ -93,15 +103,15 @@ for(i in 1:nrow(test))
 
 
 
-outputFrame2 = data.frame(matrix(nrow= nrow(test)*5, ncol=2))
-
+outputFrame3 = data.frame(matrix(nrow= (nrow(test)*5), ncol=2))
+outputFrame3 = rename(outputFrame3, c('X1'= 'id', 'X2' = 'country'))
 total = 1
 for(i in 1:nrow(test))
 {
 	for (z in 1:5)
 	{
-		outputFrame2[total, 1] = outputFrame$id[i] ;
-		outputFrame2[total,2] = outputFrame[i,z];
+		outputFrame3[total, 1] = as.character(outputFrame2$id[i]) ;
+		outputFrame3[total,2] = outputFrame2[i,z];
 		total = total + 1;
 	}
 }
