@@ -318,6 +318,7 @@ microbenchmark(NDCG(outputFrame), times = 1 )
 #.8080378 NDCG for 250 rounds 254 variables
 #.8326883 NDCG for 150 rounds all variables
 #.8194414 NDCG for 200 rounds 367 variables
+#.8337553 NDCG for 100 rounds no variables with no observations
 #######################################################################################
 test3 = test2
 
