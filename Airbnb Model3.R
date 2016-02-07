@@ -13,8 +13,11 @@
 ###################################################################################
 install.packages('microbenchmark')
 install.packages('compiler')
+install.packages('pryr')
 
-library(compiler)
+#seeing how much memory is being used
+library(pryr)
+
 
 #used for testing speed of a function
 library(microbenchmark)
@@ -26,14 +29,11 @@ library(class)
 
 
 library(foreign)
-#for examining classification and regression trees
-library(caret)
 
-#for neuralnetwork analysis
-library(neuralnet)
 
-#write to an xlsx file
-library(xlsx)
+
+
+
 #xgboost
 library(DiagrammeR)
 library(Ckmeans.1d.dp)
@@ -46,12 +46,7 @@ library(magrittr)
 #manipulating strings
 library(stringr)
 
-library(vcd)
-library(plyr)
-library(stats)
 
-#sql queries
-library(sqldf)
 
 library(MASS)
 
@@ -63,7 +58,7 @@ library(ISLR)
 library(randomForest)
 
 library(foreign)
-library(nnet)
+
 
 #naive bayes
 library(e1071)
@@ -101,6 +96,9 @@ test = merge(test, testActionDetail, by = 'id')
 test = merge(test, testDevice, by = 'id')
 
 
+
+#frees up the memory used for the sessions dataset which is over 2 gb
+gc(sessions)
 ################################################################
 #	Splitting the train dataset into train2 and test2
 #
@@ -318,7 +316,8 @@ microbenchmark(NDCG(outputFrame), times = 1 )
 #.8080378 NDCG for 250 rounds 254 variables
 #.8326883 NDCG for 150 rounds all variables
 #.8194414 NDCG for 200 rounds 367 variables
-#.8337553 NDCG for 100 rounds no variables with no observations
+#.8337553 NDCG for 100 rounds no variables with no observations and no remove2
+#.7571916 NDCG for default eta and gamma parameters
 #######################################################################################
 test3 = test2
 
@@ -365,8 +364,8 @@ length(test3id) == nrow(test3)
 #16 is removed because it is what we are trying to predict
 #remove is a vector with all columns that have less than 150 observations.
 #remove2 is feature engineering
-train2 = train2[,-c(1,2,4, 16, remove, remove2)]
-test3 = test3[,-c(1,2,4, 16, remove, remove2)]
+train2 = train2[,-c(1,2,4, 16, remove)]
+test3 = test3[,-c(1,2,4, 16, remove)]
 
 
 length(remove) + 4 + ncol(train2) +length(remove2) == ncol(train)
@@ -517,6 +516,18 @@ microbenchmark(NDCG(outputFrame), times = 1 )
 
 
 
+###########################################################################
+#random forest attempt 2
+#
+#
+#
+#
+###########################################################################
+ranOut = randomForest(y = as.factor(train2_response), x = train10Matrix, ntree =50 )
+
+
+importance(ranOut)
+ranPred = predict(ranOut, newdata = test3Matrix, type = 'prob')
 
 
 

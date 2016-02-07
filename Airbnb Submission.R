@@ -136,6 +136,23 @@ for(i in 1:nrow(test))
 }
 
 
+#input validation
+nrow(outputFrame3) == 5*nrow(test)
+str(outputFrame3)
+sum(is.na(outputFrame3))
+
+
+
+#write the data frame to an excel file
+write.csv(outputFrame3,file = 'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\Results.csv',
+	row.names = FALSE)
+
+
+
+
+
+
+#for comparison purposes
 
 Result1 = read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\Results.csv")
 
@@ -144,14 +161,3 @@ Result2 = read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\Results2.csv")
 
 
 Difference = abs((Result1[,2:4] - outputFrame[,2:4]))
-#write the data frame to an excel file
-write.xlsx(outputFrame,'C:/Users/Randy/Downloads/Kaggle Airbnb/Results2.xlsx')
-
-write.xlsx(outputFrame,'C:/Users/Randy/Downloads/Kaggle Airbnb/Results3.xlsx')
-
-
-
-
-
-
-
