@@ -102,16 +102,35 @@ for(i in 1:nrow(test))
 
 
 
-
+#initializing an outputFrame to use it needs to have 5* nrow(test) rows
+# and the first column is for id and the second is for country.
 outputFrame3 = data.frame(matrix(nrow= (nrow(test)*5), ncol=2))
 outputFrame3 = rename(outputFrame3, c('X1'= 'id', 'X2' = 'country'))
+
+
+#iterates once for each row in outputframe/nrow(test)
+#the goal of these two loops is to turn the a row with one id and 5 column prediction
+#variables in columns 2:6, into a 5 rows with the id in var 1 and the country in var 2
+#starting with the highest probability country first
+
+#total starts the count for the outputFrame3 row
 total = 1
 for(i in 1:nrow(test))
 {
-	for (z in 1:5)
+
+#goes from 2:6 because id is in the first row of outputFrame2
+#need to account for that 
+	for (z in 2:6)
 	{
+		#total is the row of outputFrame3 being filled
+		#puts the id in column 1
+		#need to cast the id as a character cause it gives that level garbage
 		outputFrame3[total, 1] = as.character(outputFrame2$id[i]) ;
+		
+		#puts the country prediction in column 2
 		outputFrame3[total,2] = outputFrame2[i,z];
+		
+		#increments the counter for outputFrame3
 		total = total + 1;
 	}
 }
