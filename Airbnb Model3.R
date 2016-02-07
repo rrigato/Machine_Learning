@@ -588,7 +588,7 @@ microbenchmark(NDCG(outputFrame3), times = 1 )
 #Need to use XGFrame(for xgboost) and outputFrame2 (for random forest) 
 #because they have the id in column 1 and the 12
 # countries as colnames with the associated probabilities in the cells
-#
+#	.5 and .5 gives .828705
 #
 #
 #
@@ -612,11 +612,39 @@ ensembleFrame[,1] = XGFrame[,1]
 ensembleFrame[,2:13] = (.5*XGFrame[,2:13] + .5*outputFrame2[,2:13])
 
 
-sum(is.na(ensembleFrame))
-nrow(ensembleFrame) == nrow(test2)
 
 
-microbenchmark(NDCG(ensembleFrame), times = 1 )
+ensembleFrame2 =  data.frame(matrix(nrow= nrow(test2), ncol=6))
+
+ensembleFrame2 = rename(ensembleFrame2, c("X1" = "id", "X2" = "C1", 
+		"X3" = "C2","X4" = "C3", "X5"="C4", "X6" = "C5")) 
+
+ensembleFrame2[,1] = ensembleFrame[,1]
+
+#sorts the ith row by its probabilities and then gets the country name
+#as the new observation
+for(i in 1:nrow(test2))
+{
+	ensembleFrame2[i,2:6] =   colnames(sort(ensembleFrame[i,2:13], decreasing=TRUE))[1:5]
+
+}
+head(ensembleFrame2)
+
+
+
+
+
+
+
+
+
+
+
+sum(is.na(ensembleFrame2))
+nrow(ensembleFrame2) == nrow(test2)
+
+
+microbenchmark(NDCG(ensembleFrame2), times = 1 )
 
 ###################################################################################
 #	Normalized Discounted Cumulative Gain
