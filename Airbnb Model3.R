@@ -31,8 +31,8 @@ library(class)
 library(foreign)
 
 
-
-
+#rename function
+library(plyr)
 
 #xgboost
 library(DiagrammeR)
@@ -491,7 +491,7 @@ for (i in 1:nrow(test2))
 
 
 
-
+XGFrame = outputFrame
 
 
 #The gsub function finds a pattern for a vector and replaces that pattern
@@ -520,16 +520,103 @@ microbenchmark(NDCG(outputFrame), times = 1 )
 #random forest attempt 2
 #
 #
+#train2Matrix all observations (does not include columns with 0 values or 1,2,4,16
+#NDCG:.8111664 ntree = 50
+#NDCG:.814493 ntree = 75 
 #
 #
 ###########################################################################
-ranOut = randomForest(y = as.factor(train2_response), x = train10Matrix, ntree =50 )
+ranOut = randomForest(y = as.factor(train2_response), x = train10Matrix, ntree =75 )
 
 
 importance(ranOut)
 ranPred = predict(ranOut, newdata = test3Matrix, type = 'prob')
 
 
+
+
+
+#initialize output frame
+outputFrame2 = data.frame(matrix(nrow= nrow(test2), ncol=13))
+outputFrame2 = rename(outputFrame2, c("X1" = "id", "X2" = "US", 
+		"X3" = "NDF","X4" = "other", "X5"="AU", "X6" = "ES", "X7" = "IT",
+		"X8" = "GB", "X9" = "FR", "X10" = "CA", "X11" = "DE",
+		"X12" = "NL", "X13" = "PT")) 
+
+#Puts the ids for the observations into the first column of outputFrame2[,1]
+outputFrame2[,1] = test2[,1]
+#test to make sure ids are the same
+sum(outputFrame2[,1] != test2[,1])
+z_element = 1
+
+
+#puts probabilities into outputFrame2
+outputFrame2[,2:13] = ranPred[,1:12]
+
+
+
+
+
+outputFrame3 =  data.frame(matrix(nrow= nrow(test2), ncol=6))
+
+outputFrame3 = rename(outputFrame3, c("X1" = "id", "X2" = "C1", 
+		"X3" = "C2","X4" = "C3", "X5"="C4", "X6" = "C5")) 
+
+outputFrame3[,1] = outputFrame2[,1]
+
+#sorts the ith row by its probabilities and then gets the country name
+#as the new observation
+for(i in 1:nrow(test2))
+{
+	outputFrame3[i,2:6] =   colnames(sort(outputFrame2[i,2:13], decreasing=TRUE))[1:5]
+
+}
+head(outputFrame3)
+
+
+#falidating output for outputFrame3
+sum(is.na(outputFrame3))
+nrow(outputFrame3) == nrow(test2)
+nrow(outputFrame3) * ncol(outputFrame3) == nrow(test2) * 6
+
+
+
+
+microbenchmark(NDCG(outputFrame3), times = 1 )
+##################################################################################
+# Ensemble random forest (NDCG = .81449) and xgboost(NDCG=.8311)
+#Need to use XGFrame(for xgboost) and outputFrame2 (for random forest) 
+#because they have the id in column 1 and the 12
+# countries as colnames with the associated probabilities in the cells
+#
+#
+#
+#
+#
+#
+#
+##################################################################################
+ensembleFrame = data.frame(matrix(nrow= nrow(test2), ncol=13))
+ensembleFrame = rename(ensembleFrame, c("X1" = "id", "X2" = "US", 
+		"X3" = "NDF","X4" = "other", "X5"="AU", "X6" = "ES", "X7" = "IT",
+		"X8" = "GB", "X9" = "FR", "X10" = "CA", "X11" = "DE",
+		"X12" = "NL", "X13" = "PT")) 
+
+#checks to make sure the the ids are the same
+sum(XGFrame[,1] != outputFrame2[,1])
+
+#Sets first row to the id
+ensembleFrame[,1] = XGFrame[,1]
+
+
+ensembleFrame[,2:13] = (.5*XGFrame[,2:13] + .5*outputFrame2[,2:13])
+
+
+sum(is.na(ensembleFrame))
+nrow(ensembleFrame) == nrow(test2)
+
+
+microbenchmark(NDCG(ensembleFrame), times = 1 )
 
 ###################################################################################
 #	Normalized Discounted Cumulative Gain
