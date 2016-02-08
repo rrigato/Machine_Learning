@@ -584,16 +584,17 @@ nrow(outputFrame3) * ncol(outputFrame3) == nrow(test2) * 6
 
 microbenchmark(NDCG(outputFrame3), times = 1 )
 ##################################################################################
-# Ensemble random forest (NDCG = .81449) and xgboost(NDCG=.8311)
+# Ensemble random forest (NDCG = .81449) and xgboost(NDCG=.8321661)
 #Need to use XGFrame(for xgboost) and outputFrame2 (for random forest) 
 #because they have the id in column 1 and the 12
 # countries as colnames with the associated probabilities in the cells
-#	.5 and .5 gives .828705
+#	.5*xgboost and .5* randomForest gives .828705
 #
+##	.75*xgboost and .25* randomForest gives .8311103
 #
+#	.9*xgboost and .1* randomForest gives .8318695
 #
-#
-#
+#	.1*xgboost and .9* randomForest gives .8227762
 #
 ##################################################################################
 ensembleFrame = data.frame(matrix(nrow= nrow(test2), ncol=13))
@@ -609,7 +610,7 @@ sum(XGFrame[,1] != outputFrame2[,1])
 ensembleFrame[,1] = XGFrame[,1]
 
 
-ensembleFrame[,2:13] = (.5*XGFrame[,2:13] + .5*outputFrame2[,2:13])
+ensembleFrame[,2:13] = (.1*XGFrame[,2:13] + .9*outputFrame2[,2:13])
 
 
 

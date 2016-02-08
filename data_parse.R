@@ -13,6 +13,9 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 
+library(plyr)
+
+
 #################################################################
 #
 #
@@ -714,21 +717,25 @@ write.csv(mtest2, row.names = FALSE,
 ############################################################################
 
 AGPrior = as.data.frame(matrix(nrow = nrow(age_gender_bkts)*5,
-					ncol = ncol(age_gender_bkts) + 1))
+					ncol = 4))
 
 
-AGPrior[,1:3] = as.character(AGPrior[,1:3])
+AGPrior = rename(AGPrior, c("V1" = "country_destination", "V2" = "gender",
+					"V3" = "population_in_thousands",
+					"V4" = "age"))
 z = 1;
 for( i in 1:nrow(age_gender_bkts))
 {
 
-	pos = regexpr('-', age_gender_bkts$age_bucket[i])
+	pos = regexpr('-', age_gender_bkts$age_bucket[i])[[1]]
 	if (pos == -1)
 	{
 		for(d in (100:104))
 		{
-			AGPrior[z,1:5]= age_gender_bkts[i,1:5];
-			AGPrior[z,ncol(age_gender_bkts) + 1] = d;
+			AGPrior[z,1] = as.character(age_gender_bkts[i,2])
+			AGPrior[z,2] = as.character(age_gender_bkts[i,3])
+			AGPrior[z,3] = age_gender_bkts[i,4]
+			AGPrior[z,4] = d;
 			z = z + 1;
 		}
 		
