@@ -716,6 +716,9 @@ write.csv(mtest2, row.names = FALSE,
 #
 ############################################################################
 
+
+
+#initializing my prior distribution data frame
 AGPrior = as.data.frame(matrix(nrow = nrow(age_gender_bkts)*5,
 					ncol = 4))
 
@@ -723,43 +726,100 @@ AGPrior = as.data.frame(matrix(nrow = nrow(age_gender_bkts)*5,
 AGPrior = rename(AGPrior, c("V1" = "country_destination", "V2" = "gender",
 					"V3" = "population_in_thousands",
 					"V4" = "age"))
+
+
+
+#z keeps track of the row in AGPrior
 z = 1;
 for( i in 1:nrow(age_gender_bkts))
 {
 
+	#gets the position of where the dash is
+	#ex: 5-9, pos = 2
+	#ex: 15-19, pos = 3
+	#ex: 100+, pos = -1
+	#statements are exectued depending on where the pos is
+
 	pos = regexpr('-', age_gender_bkts$age_bucket[i])[[1]]
+
 	if (pos == -1)
 	{
+
+		#iterates over ages 100 to 104
 		for(d in (100:104))
 		{
+			#places country in first column of AGPrior
 			AGPrior[z,1] = as.character(age_gender_bkts[i,2])
+
+			#places gender in second column of AGPrior
 			AGPrior[z,2] = as.character(age_gender_bkts[i,3])
+	
+			#places population in third column of AGPrior
 			AGPrior[z,3] = age_gender_bkts[i,4]
+
+			#places the age in fourth column
 			AGPrior[z,4] = d;
+			
+			#increments the row of AGPrior
 			z = z + 1;
 		}
 		
 	}else if (pos ==2)
 	{
+
+
+		#Start and end of the substring for the age bracket
+		#ex: 5-9 has start = 5 and end = 9
 		start = as.numeric(substr(age_gender_bkts$age_bucket[i],1,1));
 		end = as.numeric(substr(age_gender_bkts$age_bucket[i],3,3));
+
+
 		for(d in (start:end))
 		{
 
-			AGPrior[z,ncol(age_gender_bkts) + 1] = d;
-			AGPrior[z,1:5]= age_gender_bkts[i,1:5];
+			#places country in first column of AGPrior
+			AGPrior[z,1] = as.character(age_gender_bkts[i,2])
+
+			#places gender in second column of AGPrior
+			AGPrior[z,2] = as.character(age_gender_bkts[i,3])
+	
+			#places population in third column of AGPrior
+			AGPrior[z,3] = age_gender_bkts[i,4]
+
+			#places the age in fourth column
+			AGPrior[z,4] = d;
 			
+			#increments the row of AGPrior
 			z = z + 1;
+
 		}
 
 	}else if (pos ==3)
 	{
+
+		#Start and end of the substring for the age bracket
+		#ex: 95-99 has start = 95 and end = 99
 		start = as.numeric(substr(age_gender_bkts$age_bucket[i],1,2));
 		end = as.numeric(substr(age_gender_bkts$age_bucket[i],4,5));
+
+
+		#makes sure each age in the range has a match
 		for(d in (start:end))
 		{
-			AGPrior[z,1:5]= age_gender_bkts[i,1:5];
-			AGPrior[z,ncol(age_gender_bkts) + 1] = d;
+
+			#places country in first column of AGPrior
+			AGPrior[z,1] = as.character(age_gender_bkts[i,2])
+
+			#places gender in second column of AGPrior
+			AGPrior[z,2] = as.character(age_gender_bkts[i,3])
+	
+			#places population in third column of AGPrior
+			AGPrior[z,3] = age_gender_bkts[i,4]
+
+			#places the age in fourth column
+			AGPrior[z,4] = d;
+			
+			#increments the row of AGPrior
 			z = z + 1;
 		}
 
@@ -769,8 +829,9 @@ for( i in 1:nrow(age_gender_bkts))
 }
 
 
+sum(is.na(AGPrior))
 
-
+nrow(age_gender_bkts)*5 == nrow(AGPrior)
 
 
 
