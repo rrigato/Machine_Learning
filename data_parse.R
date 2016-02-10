@@ -907,8 +907,34 @@ for (i in 1:nrow(train))
 as.integer(sum(genderTrain[,2:13])) == length(which((train$gender == "MALE") | (train$gender == "FEMALE" )))
 
 
-write.csv(genderTrain, row.names = FALSE,
- 'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\genderTrain.csv')
+
+
+############################################################################
+#getting column countries aligned
+#don't need to do this if they are put in the correct order
+#
+#
+#
+############################################################################
+genderTrain2[,1] = genderTrain[,1]
+
+genderTrain2 =  data.frame(matrix(nrow= nrow(train), ncol=13))
+genderTrain2 = rename(genderTrain2, c("X1" = "id", "X2" = "US", 
+		"X3" = "NDF","X4" = "other", "X5"="AU", "X6" = "ES", "X7" = "IT",
+		"X8" = "GB", "X9" = "FR", "X10" = "CA", "X11" = "DE",
+		"X12" = "NL", "X13" = "PT"))
+
+
+incorrect = colnames(genderTrain)
+correct = colnames(genderTrain2)
+for (c in 2:13)
+{
+	num = which(incorrect == correct[c]) 
+	genderTrain2[,c] = genderTrain[,num]
+}
+
+write.csv(genderTrain2, row.names = FALSE,
+ 'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\genderTrain2.csv')
 
 
 
@@ -916,6 +942,15 @@ write.csv(genderTrain, row.names = FALSE,
 
 
 
+################################################################################################
+#Adding gender prior for test set
+#
+#
+#
+#
+#
+#
+#################################################################################################
 
 
 

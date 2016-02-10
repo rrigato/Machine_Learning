@@ -71,7 +71,7 @@ test <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testAction2.csv")
 testType <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testActionType.csv")
 testActionDetail <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testActionDetail.csv")
 testDevice <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testDeviceType.csv")
-trainGender <- read.csv('C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\genderTrain.csv')
+trainGender <- read.csv('C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\genderTrain2.csv')
 
 sessions <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\sessions.csv")
 countries <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\countries.csv")
@@ -92,6 +92,17 @@ test = merge(test, testDevice, by = 'id')
 
 #frees up the memory used for the sessions dataset which is over 2 gb
 gc(sessions)
+
+
+#gtrain
+
+gTrain = data.frame(matrix(nrow= nrow(train), ncol=2))
+gTrain = rename(gTrain, c("X1" = "id", "X2" = "Nothing")) 
+gTrain[,1] = train[,1]
+gTrain = merge(gTrain, genderTrain, by = 'id')
+head(gTrain)
+
+train = merge(train, genderTrain, by = "id")
 ################################################################
 #	Splitting the train dataset into train2 and test2
 #
@@ -307,24 +318,33 @@ for (i in 1:nrow(test2))
 XGFrame = outputFrame
 
 
+outputFrame2 =  data.frame(matrix(nrow= nrow(test2), ncol=6))
+
+outputFrame2 = rename(outputFrame2, c("X1" = "id", "X2" = "C1", 
+		"X3" = "C2","X4" = "C3", "X5"="C4", "X6" = "C5")) 
+
+outputFrame2[,1] = outputFrame[,1]
+
+outputFrame2[,2:6] = 0
+
 #The gsub function finds a pattern for a vector and replaces that pattern
 for(i in 1:nrow(test2))
 {
-	outputFrame[i,2:6] =   colnames(sort(outputFrame[i,2:13], decreasing=TRUE))[1:5]
+	outputFrame2[i,2:6] =   colnames(sort(outputFrame[i,2:13], decreasing=TRUE))[1:5]
 
 }
-head(outputFrame)
+head(outputFrame2)
 
 
-#falidating output for outputFrame
-sum(is.na(outputFrame))
-nrow(outputFrame) == nrow(test2)
-nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 13
+#falidating output for outputFrame2
+sum(is.na(outputFrame2))
+nrow(outputFrame2) == nrow(test2)
+nrow(outputFrame2) * ncol(outputFrame2) == nrow(test2) * 13
 
 
 
 
-microbenchmark(NDCG(outputFrame), times = 1 )
+microbenchmark(NDCG(outputFrame2), times = 1 )
 
 
 
@@ -348,6 +368,18 @@ microbenchmark(NDCG(outputFrame), times = 1 )
 #	.1*xgboost and .9* randomForest gives .8227762
 #
 ##################################################################################
+#Ensemble of Xgboost(NDCG=.8321371) and genderTrain
+#
+#
+#
+#
+#
+#
+##########################################################################
+
+
+
+
 ensembleFrame = data.frame(matrix(nrow= nrow(test2), ncol=13))
 ensembleFrame = rename(ensembleFrame, c("X1" = "id", "X2" = "US", 
 		"X3" = "NDF","X4" = "other", "X5"="AU", "X6" = "ES", "X7" = "IT",
@@ -359,6 +391,11 @@ sum(XGFrame[,1] != outputFrame2[,1])
 
 #Sets first row to the id
 ensembleFrame[,1] = XGFrame[,1]
+
+#gets the observations in test2
+trainG = trainGender[ran_num_test,]
+
+sum(trainG[,1] != XGFrame[,1])
 
 
 ensembleFrame[,2:13] = (.1*XGFrame[,2:13] + .9*outputFrame2[,2:13])
