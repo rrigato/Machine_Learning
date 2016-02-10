@@ -14,7 +14,7 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 library(plyr)
-library(sqldf)
+
 
 #################################################################
 #
@@ -861,21 +861,34 @@ genderTrain[,2:13] = 0
 
 
 
+#gets the names of the countries for which we have priors
 names = colnames(genderTrain)[4:13]
+
+#gets the total number of females
+femaleTotal =  sum(age_gender_bkts[which(age_gender_bkts$gender == "female" ),4])
+
+
+
 for (i in 1:nrow(train))
 {
-	gender = as.character(train$gender[i])
+	tgen = tolower(as.character(train$gender[i]))
 
-	if (gender == "MALE" || gender == "FEMALE")
+	if (gender == "male" ||)
 	{
 		for (z in 1:9)
 		{
 			temp = names[z]
-			sqldf("select population_in_thousands from	
-				age_gender_bkts where
-				country_destination = temp;")
+
+			individual = age_gender_bkts[which( (age_gender_bkts$gender == tgen)
+				& (age_gender_bkts$country_destination == names[z]) ),4]
+
 			
 		}
+	}
+
+	if (tgen = "female")
+	{
+		
 	}
 }
 
