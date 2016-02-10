@@ -1,9 +1,7 @@
 ##################################################################################
 #	Airbnb script to predict where a customer will book
 #
-#	Attempt 3
-#
-#
+#	Attempt 4
 #
 #
 #
@@ -11,9 +9,7 @@
 #
 #
 ###################################################################################
-install.packages('microbenchmark')
-install.packages('compiler')
-install.packages('pryr')
+
 
 #seeing how much memory is being used
 library(pryr)
@@ -26,9 +22,6 @@ library(microbenchmark)
 
 library(class)
 
-
-
-library(foreign)
 
 
 #rename function
@@ -121,186 +114,6 @@ ran_num_train = sample(1:nrow(train), size_of_train)
 ran_num_test = ran_num_test[(!(ran_num_test %in% ran_num_train)) == TRUE]
 train2 = train[ran_num_train,]
 test2 = train[ran_num_test,]
-
-
-#######################################################################################
-#	.823141 NDCG for 5 trees .1 shrinkage .8 train .2 test interaction.depth = 2
-#	.8304302 NDCG for 125 trees .1 shrinkage .8 train .2 test interaction.depth = 3
-#	.8308948 NDCG for 200 trees .1 shrinkage .8 train .2 test interaction.depth = 2
-#
-#	.8284771 NDCG for 100 trees .1 shrinkage .8 train .2 test interaction.depth = 2
-#	includes 'Action' variable from sessions
-#
-#	.8288097 NDCG for 100 trees .1 shrinkage .8 train .2 test interaction.depth = 2
-#	includes 'Action' and 'ActionDetail' variable from sessions
-#
-#
-#	.8292822 NDCG for 100 trees .1 shrinkage .8 train .2 test interaction.depth = 2
-#	includes 'Action' and 'ActionDetail' and 'browser' variable from sessions
-#
-#
-#
-#
-#
-###############################################################################
-
-remove = numeric()
-z = 1
-for( i in 17:ncol(train2))
-{
-	if (sum(train2[,i]) < 150)
-	{
-		remove[z] = i
-		z = z + 1
-	}
-}
-train3 = train2[,-c(1,2,4, remove)]
-length(remove)
-length(remove) + 3 + ncol(train3) length(remove2) == ncol(train)
-
-#have to take out 1,2,4(id, date_first_booked, date_create_account) 
-# and action variables that have no variation
-bTree = gbm(country_destination ~. , distribution = "multinomial",
-		 n.trees = 100, shrinkage = .1,
-		interaction.depth =2,  data = train3 )
-
-test3 = test2[,-c(1,2,4, remove)]
-bTreeP = predict(bTree, newdata=test3, n.trees = 300, type="response")
-bTreeP = as.data.frame(bTreeP)
-head(bTreeP)
-
-
-
-outputFrame = as.data.frame(matrix(nrow=nrow(test2), ncol = 6))
-
-outputFrame = rename(outputFrame, c("V1" = "id", "V2" = "country1",
-				"V3" = "country2", "V4" = "country3",
-				"V5" = "country4", "V6" = "country5"))
-
-outputFrame[,1] = test2[,1]
-
-
-#The gsub function finds a pattern for a vector and replaces that pattern
-for(i in 1:nrow(test2))
-{
-	outputFrame[i,2:6] =  gsub(pattern = ".100", 
-	replace = "", x = colnames(sort(bTreeP[i,1:12], decreasing=TRUE))[1:5])
-
-}
-head(outputFrame)
-
-
-#falidating output for outputFrame
-sum(is.na(outputFrame))
-nrow(outputFrame) == nrow(test2)
-nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 6
-
-
-
-
-microbenchmark(NDCG(outputFrame), times = 1 )
-
-
-
-
-
-
-
-colSums(Filter(is.numeric, train))
-
-
-
-##############################################################################################
-#
-#randomForest
-#
-#
-#
-#
-############################################################################################
-
-
-train3 = train2[,-c(1, 2, 4, 214, 223, 224, 225,
-		228, 274, 286, 297, 308:313, 314:322,  323:331, 332:345,346:360)]
-
-#turns train3 into a numeric matrix
-train3 = data.matrix(train3)
-
-randomForest(factor(country_destination) ~. ,data = train3)
-
-
-
-
-
-##############################################################################################
-#testing speed and accuracy of matrix versus a data frame
-# for same machine learning technique
-#
-#
-#	.8216727 NDCG  train2/train3 as a data frame	 n.trees = 5, shrinkage = .1,
-#		interaction.depth =2,  data = train3
-#	
-#	gbm has to be a data.frame
-#
-#	
-#
-##############################################################################################
-
-
-
-
-
-train3 = train2[,-c(1, 2, 4, 214, 223, 224, 225,
-		228, 274, 286, 297, 308:313, 314:322,  323:331, 332:345,346:360)]
-
-#turns train3 into a numeric matrix
-train3 = data.matrix(train3)
- 
-#have to take out 1,2,4(id, date_first_booked, date_create_account) 
-# and action variables that have no variation
-bTree = gbm(country_destination ~. , distribution = "multinomial",
-		 n.trees = 5, shrinkage = .1,
-		interaction.depth =2,  data = train3 )
-
-
-test3 = test2[,-c(1, 2, 4, 214, 223, 224, 225,
-		228, 274, 286, 297, 308:313, 314:322,  323:331, 332:345,346:360)]
-
-test3 = data.matrix(test3)
-bTreeP = predict(bTree, newdata=test3, n.trees = 300, type="response")
-bTreeP = as.data.frame(bTreeP)
-head(bTreeP)
-
-
-
-outputFrame = as.data.frame(matrix(nrow=nrow(test2), ncol = 6))
-
-outputFrame = rename(outputFrame, c("V1" = "id", "V2" = "country1",
-				"V3" = "country2", "V4" = "country3",
-				"V5" = "country4", "V6" = "country5"))
-
-outputFrame[,1] = test2[,1]
-
-
-#The gsub function finds a pattern for a vector and replaces that pattern
-for(i in 1:nrow(test2))
-{
-	outputFrame[i,2:6] =  gsub(pattern = ".5", 
-	replace = "", x = colnames(sort(bTreeP[i,1:12], decreasing=TRUE))[1:5])
-
-}
-head(outputFrame)
-
-
-#falidating output for outputFrame
-sum(is.na(outputFrame))
-nrow(outputFrame) == nrow(test2)
-nrow(outputFrame) * ncol(outputFrame) == nrow(test2) * 6
-
-
-
-
-microbenchmark(NDCG(outputFrame), times = 1 )
 
 
 
@@ -516,73 +329,11 @@ microbenchmark(NDCG(outputFrame), times = 1 )
 
 
 
-###########################################################################
-#random forest attempt 2
-#
-#
-#train2Matrix all observations (does not include columns with 0 values or 1,2,4,16
-#NDCG:.8111664 ntree = 50
-#NDCG:.814493 ntree = 75 
-#
-#
-###########################################################################
-ranOut = randomForest(y = as.factor(train2_response), x = train10Matrix, ntree =75 )
-
-
-importance(ranOut)
-ranPred = predict(ranOut, newdata = test3Matrix, type = 'prob')
 
 
 
 
 
-#initialize output frame
-outputFrame2 = data.frame(matrix(nrow= nrow(test2), ncol=13))
-outputFrame2 = rename(outputFrame2, c("X1" = "id", "X2" = "US", 
-		"X3" = "NDF","X4" = "other", "X5"="AU", "X6" = "ES", "X7" = "IT",
-		"X8" = "GB", "X9" = "FR", "X10" = "CA", "X11" = "DE",
-		"X12" = "NL", "X13" = "PT")) 
-
-#Puts the ids for the observations into the first column of outputFrame2[,1]
-outputFrame2[,1] = test2[,1]
-#test to make sure ids are the same
-sum(outputFrame2[,1] != test2[,1])
-z_element = 1
-
-
-#puts probabilities into outputFrame2
-outputFrame2[,2:13] = ranPred[,1:12]
-
-
-
-
-
-outputFrame3 =  data.frame(matrix(nrow= nrow(test2), ncol=6))
-
-outputFrame3 = rename(outputFrame3, c("X1" = "id", "X2" = "C1", 
-		"X3" = "C2","X4" = "C3", "X5"="C4", "X6" = "C5")) 
-
-outputFrame3[,1] = outputFrame2[,1]
-
-#sorts the ith row by its probabilities and then gets the country name
-#as the new observation
-for(i in 1:nrow(test2))
-{
-	outputFrame3[i,2:6] =   colnames(sort(outputFrame2[i,2:13], decreasing=TRUE))[1:5]
-
-}
-head(outputFrame3)
-
-
-#falidating output for outputFrame3
-sum(is.na(outputFrame3))
-nrow(outputFrame3) == nrow(test2)
-nrow(outputFrame3) * ncol(outputFrame3) == nrow(test2) * 6
-
-
-
-
-microbenchmark(NDCG(outputFrame3), times = 1 )
 ##################################################################################
 # Ensemble random forest (NDCG = .81449) and xgboost(NDCG=.8321661)
 #Need to use XGFrame(for xgboost) and outputFrame2 (for random forest) 
@@ -700,12 +451,6 @@ NDCG <- function(data_frame){
 
 
 }
-
-
-
-
-
-
 
 
 
