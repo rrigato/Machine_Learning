@@ -868,33 +868,47 @@ names = colnames(genderTrain)[4:13]
 femaleTotal =  sum(age_gender_bkts[which(age_gender_bkts$gender == "female" ),4])
 
 
+#gets the total number of females
+maleTotal =  sum(age_gender_bkts[which(age_gender_bkts$gender == "male" ),4])
 
 for (i in 1:nrow(train))
 {
 	tgen = tolower(as.character(train$gender[i]))
 
-	if (gender == "male" ||)
+	if (tgen == "male")
 	{
-		for (z in 1:9)
+		for (z in 1:10)
 		{
-			temp = names[z]
+
 
 			individual = age_gender_bkts[which( (age_gender_bkts$gender == tgen)
 				& (age_gender_bkts$country_destination == names[z]) ),4]
 
-			
+			genderTrain[i,(z+3)] = sum(individual) / maleTotal;
 		}
 	}
 
-	if (tgen = "female")
+	if (tgen == "female")
 	{
+		for (z in 1:10)
+		{
+
+
+			individual = age_gender_bkts[which( (age_gender_bkts$gender == tgen)
+				& (age_gender_bkts$country_destination == names[z]) ),4]
+
+			genderTrain[i,(z+3)] = sum(individual) / femaleTotal;
+		}
 		
 	}
 }
 
+#input validation
+as.integer(sum(genderTrain[,2:13])) == length(which((train$gender == "MALE") | (train$gender == "FEMALE" )))
 
 
-
+write.csv(genderTrain, row.names = FALSE,
+ 'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\genderTrain.csv')
 
 
 
