@@ -14,7 +14,7 @@ age_gender_bkts <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\age_gen
 
 
 library(plyr)
-
+library(sqldf)
 
 #################################################################
 #
@@ -832,6 +832,56 @@ for( i in 1:nrow(age_gender_bkts))
 sum(is.na(AGPrior))
 
 nrow(age_gender_bkts)*5 == nrow(AGPrior)
+
+
+
+
+#merging the prior with train
+
+
+#initialize the data frame
+genderTrain = as.data.frame(matrix(nrow = nrow(train),
+					ncol = 13))
+
+
+genderTrain = rename(genderTrain, c("V1" = "id", "V2" = "NDF",
+					"V3" = "other",
+					"V4" = "US",
+					
+					"V5" = "FR", "V6" = "CA", "V7" = "GB",
+					"V8" = "ES", "V9" = "IT", "V10" = "PT",
+					"V11" = "NL", "V12" = "DE", "V13" = "AU"))
+
+
+#add train id and 0 out nas 
+genderTrain[,1] = train[,1]
+
+genderTrain[,2:13] = 0
+
+
+
+
+names = colnames(genderTrain)[4:13]
+for (i in 1:nrow(train))
+{
+	gender = as.character(train$gender[i])
+
+	if (gender == "MALE" || gender == "FEMALE")
+	{
+		for (z in 1:9)
+		{
+			temp = names[z]
+			sqldf("select population_in_thousands from	
+				age_gender_bkts where
+				country_destination = temp;")
+			
+		}
+	}
+}
+
+
+
+
 
 
 
