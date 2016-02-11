@@ -94,15 +94,14 @@ test = merge(test, testDevice, by = 'id')
 gc(sessions)
 
 
+
+
+train = merge(train, gTrain2, by = 'id')
 #gtrain
 
-gTrain = data.frame(matrix(nrow= nrow(train), ncol=2))
-gTrain = rename(gTrain, c("X1" = "id")) 
-gTrain[,1] = as.character(train[,1])
-gTrain = merge( gTrain,  trainGender4, by = 'id')
-
-gTrain = gTrain[,-c(2)]
 head(gTrain)
+
+gTrain2 = gTrain[,-c(3,4)]
 ################################################################
 #	Splitting the train dataset into train2 and test2
 #
@@ -267,14 +266,6 @@ bst = xgboost(param=param, data = train2Matrix, label = train2_response,
 
 
 
-# Get the feature real names
-names <- dimnames(train2Matrix)[[2]]
-
-# Compute feature importance matrix
-importance_matrix <- xgb.importance(names, model = bst); importance_matrix
-
-
-
 #the predictions are in a nrow(test3)*4 long vector
 #bstPred[1:12] is the probability of each country
 #for the first observation of test2
@@ -367,12 +358,15 @@ microbenchmark(NDCG(outputFrame2), times = 1 )
 ##################################################################################
 #Ensemble of Xgboost(NDCG=.8344382) and gTest2(gTrain has all observations of train)
 #
-#.75*XGFrame[,2:13] + .25*gTest2[,2:13]
+#.75*XGFrame[,2:13] + .25*gTest2[,2:13]  = .8301658
+#.9 * XGFrame + .1 * gTest2 = .83414
 #
 #
+#.75*XGFrame[,2, 5:13] + .25*gTest2[,2, 5:13]  = .8333331
 #
+#.85*XGFrame[,2, 5:13] + .15*gTest2[,2, 5:13]  = .8342865
 #
-#
+#.95*XGFrame[,2, 5:13] + .05*gTest2[,2, 5:13]  = .8344277
 ##########################################################################
 
 
@@ -396,8 +390,9 @@ trainG = trainGender[ran_num_test,]
 sum(trainG[,1] != XGFrame[,1])
 
 
-ensembleFrame[,2:13] = (.75*XGFrame[,2:13] + .25*gTest2[,2:13])
-
+ensembleFrame[,2] = (.95*XGFrame[,2] + .05*gTest2[,2])
+ensembleFrame[,3:4] = XGFrame[,3:4]
+ensembleFrame[,5:13] = (.95*XGFrame[,5:13] + .05*gTest2[,5:13])
 
 
 

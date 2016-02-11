@@ -26,7 +26,7 @@
 
 
 test3id = test[,1]
-test3 = test[,-c(1,2,4, 16, remove, remove2)]
+test3 = test[,-c(1,2,4, 16, remove)]
 
 
 
@@ -79,7 +79,8 @@ for (i in 1:nrow(test))
 		z_element = z_element + 1
 	}
 }
-
+head(outputFrame)
+laterTest = outputFrame
 
 
 outputFrame2 =  data.frame(matrix(nrow= nrow(test), ncol=6))
@@ -144,7 +145,7 @@ sum(is.na(outputFrame3))
 
 
 #write the data frame to an excel file
-write.csv(outputFrame3,file = 'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\Results.csv',
+write.csv(outputFrame3,file = 'C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\Results2.csv',
 	row.names = FALSE)
 
 
