@@ -838,7 +838,7 @@ nrow(age_gender_bkts)*5 == nrow(AGPrior)
 
 #merging the prior with train
 
-
+#run the train in the after all the merges to get this to work
 #initialize the data frame
 genderTrain = as.data.frame(matrix(nrow = nrow(train),
 					ncol = 13))
@@ -907,7 +907,7 @@ for (i in 1:nrow(train))
 as.integer(sum(genderTrain[,2:13])) == length(which((train$gender == "MALE") | (train$gender == "FEMALE" )))
 
 
-
+sum(genderTrain[,1] != train[,1])
 
 ############################################################################
 #getting column countries aligned

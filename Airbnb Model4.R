@@ -71,7 +71,7 @@ test <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testAction2.csv")
 testType <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testActionType.csv")
 testActionDetail <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testActionDetail.csv")
 testDevice <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\testDeviceType.csv")
-trainGender <- read.csv('C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\genderTrain2.csv')
+trainGender4 <- read.csv('C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\genderTrain2.csv')
 
 sessions <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\sessions.csv")
 countries <- read.csv("C:\\Users\\Randy\\Downloads\\Kaggle Airbnb\\countries.csv")
@@ -97,12 +97,12 @@ gc(sessions)
 #gtrain
 
 gTrain = data.frame(matrix(nrow= nrow(train), ncol=2))
-gTrain = rename(gTrain, c("X1" = "id", "X2" = "Nothing")) 
-gTrain[,1] = train[,1]
-gTrain = merge(gTrain, genderTrain, by = 'id')
-head(gTrain)
+gTrain = rename(gTrain, c("X1" = "id")) 
+gTrain[,1] = as.character(train[,1])
+gTrain = merge( gTrain,  trainGender4, by = 'id')
 
-train = merge(train, genderTrain, by = "id")
+gTrain = gTrain[,-c(2)]
+head(gTrain)
 ################################################################
 #	Splitting the train dataset into train2 and test2
 #
@@ -273,9 +273,6 @@ names <- dimnames(train2Matrix)[[2]]
 # Compute feature importance matrix
 importance_matrix <- xgb.importance(names, model = bst); importance_matrix
 
-# Nice graph for importance
-xgb.plot.importance(importance_matrix[1:100,])
-
 
 
 #the predictions are in a nrow(test3)*4 long vector
@@ -368,8 +365,9 @@ microbenchmark(NDCG(outputFrame2), times = 1 )
 #	.1*xgboost and .9* randomForest gives .8227762
 #
 ##################################################################################
-#Ensemble of Xgboost(NDCG=.8321371) and genderTrain
+#Ensemble of Xgboost(NDCG=.8344382) and gTest2(gTrain has all observations of train)
 #
+#.75*XGFrame[,2:13] + .25*gTest2[,2:13]
 #
 #
 #
@@ -398,7 +396,7 @@ trainG = trainGender[ran_num_test,]
 sum(trainG[,1] != XGFrame[,1])
 
 
-ensembleFrame[,2:13] = (.1*XGFrame[,2:13] + .9*outputFrame2[,2:13])
+ensembleFrame[,2:13] = (.75*XGFrame[,2:13] + .25*gTest2[,2:13])
 
 
 
